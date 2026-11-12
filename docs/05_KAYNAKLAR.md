@@ -31,9 +31,12 @@ Bu sayılar yukarıdaki makalelerden ve depolardan alınmıştır. Görev 02'de 
 | GECTurk etiketleyicisi | GECTurk sentetik test | 0,98 | Kara vd. |
 | GECTurk etiketleyicisi | Film yorumları | 0,84 (84,2) | Kara vd.; Turkish-GEC deposu |
 | GECTurk etiketleyicisi | OSCAR GEC test | 14,7 | Turkish-GEC deposu |
-| mT5, OSCAR GEC | Film yorumları | 28,1 | Turkish-GEC deposu |
-| mT5, OSCAR GEC | OSCAR GEC test | 62,8 | Turkish-GEC deposu |
-| mT5, OSCAR GEC | Tweetler | 79,0 | Turkish-GEC deposu |
+| mT5, OSCAR GEC | Film yorumları | 28,1 | Ersoy ve Yıldız, Tablo 4 |
+| mT5, OSCAR GEC | OSCAR GEC test | 55,4 | Ersoy ve Yıldız, Tablo 4 |
+| mT5, OSCAR GEC | Tweetler | 79,0 | Ersoy ve Yıldız, Tablo 4 |
+| mT5, GPT GEC | OSCAR GEC test | 62,8 | Ersoy ve Yıldız, Tablo 4 |
+
+2026-11-12 notu: Bu tabloda daha önce OSCAR GEC (mT5) için OSCAR testinde 62,8 yazıyordu; o sayı GPT GEC (mT5) modeline ait. Ersoy ve Yıldız'ın bütün sayıları ERRANT-TR ile hesaplanmıştır; etiketleyicinin film yorumlarındaki 84,2'si GECTurk makalesinden (M2 scorer). Ayrıntı: `raporlar/00_varsayim_dogrulama.md`.
 
 ## Araçlar
 

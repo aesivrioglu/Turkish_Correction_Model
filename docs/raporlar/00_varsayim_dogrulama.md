@@ -1,0 +1,24 @@
+# Rapor 00: Doğrulanmamış varsayımların kontrolü
+
+Tarih: 2026-11-12. Kapsam: `docs/03_TEKNIK_NOTLAR.md` içindeki "Doğrulanmamış varsayımlar" tablosu ve "Bilinen tuzaklar"daki araç sorunları. Veri kaynaklarının ayrıntısı: `01_veri_kaynaklari.md`.
+
+## Sonuç tablosu
+
+| Varsayım | Sonuç | Kanıt | Projeye etkisi |
+| --- | --- | --- | --- |
+| ERRANT-TR kullanılabilir bir araç olarak yayımlanmış | **Doğru, kısmen.** `github.com/harunuz/erranttr`, MIT, son commit 2023-08. Bağımlılıklar `rapidfuzz` ve `zemberek-python` (saf Python). İki kaynak dosya (hunspell `tr_TR.aff` ve TS Corpus kelime listesi) sürüm sayfasından ayrıca indiriliyor. Paketlenmemiş, Python sürümü belirtilmemiş, `process.py` sabit dosya adı okuyor | Depo README ve `requirements.txt` (ikincil) | Hem skorlayıcı hem hata türü analizi için kullanılabilir. Kurulumu görev 02'de; iki yeni bağımlılık eklemek için onay gerekecek |
+| OSCAR GEC ve tweet setinin lisansı akademik kullanıma izin veriyor | **Kısmen.** OSCAR GEC eğitim ve test verisi MIT. Tweet setinde lisans yok | HF veri kartları; tweet README'si | Tweet setini yeniden dağıtmadan, yalnızca değerlendirmede kullanmak danışmanla teyit edilmeli |
+| OSCAR GEC verisi ve mT5 modeli Hugging Face'te erişilebilir | **Doğru.** `asimokby/Turkish-OSCAR-GEC`, `asimokby/Turkish-GEC-Evaluation`, `asimokby/Turkish-OSCAR-GEC-v0`. Ama mT5 ağırlıklarının lisansı ve model kartı yok; yüklenen checkpoint'in makaledeki model olduğu yazılı değil | HF API (ikincil) | Kapı A'da 79,0 tutmazsa olası nedenlerden biri de bu |
+| Ersoy ve Yıldız'ın skorları M2 scorer ile hesaplanmış | **Yanlış.** ERRANT-TR ile M2 üretilip ERRANT'ın karşılaştırma betikleriyle F0.5 hesaplanmış. Yazarların deposunda betik yok; büyük olasılıkla ERRANT-TR'deki `commands/compare_m2.py` (bayraklar çıkarım) | Makale, bölüm 4.2: "ERRANT-TR outputs the annotations in M2 format … evaluated using ERRANT's evaluation scripts" | K15 güncellenmeli: OSCAR ve tweetlerde araç ERRANT-TR. Film yorumlarında iki yayımlanmış sayı farklı araçlardan |
+| Yayımlanmış temel sayılar doğru aktarıldı | **Biri yanlış.** OSCAR testinde 62,8 GPT GEC (mT5)'e ait; OSCAR GEC (mT5) 55,4. Diğerleri (79,0; 28,1; 14,7; 84,2) doğru | Makale, Tablo 4 | `00_PROJE_OZETI.md` tablosu ve başarı ölçütü düzeltilmeli (senin kararın) |
+| Aday modeller T4'te fp16 ile kararlı eğitilir | **Doğrulanamadı** (GPU deneyi gerekir). Bu iki modele özgü NaN raporu bulunamadı. İki model de bf16 ile yayımlanmış; Qwen ailesinin başka modellerinde fp16 taşması raporlanmış | Qwen3-Embedding ve Qwen2-VL tartışmaları (ikincil) | Pilotta kayıp izlenir. Önlemler: `prepare_model_for_kbit_training`, `bnb_4bit_compute_dtype=float16`, LoRA ağırlıkları fp32, gradyan kırpma, düşük öğrenme oranı, `pad_token` kontrolü |
+| Kumru-2B ve Qwen kimlikleri `configs/base.yaml` içindeki gibi | **Kumru yanlış.** `vngrs-ai/Kumru-2B` → `vngrs/Kumru-2B` yönlendirmesi var. 2,38 milyar parametre, Mistral mimarisi, Apache-2.0, 8.192 bağlam, Llama-3 tarzı sohbet şablonu, talimat modeli. `Qwen/Qwen3-1.7B` doğru: 2,03 milyar (gömme dahil), Apache-2.0, düşünme modu `enable_thinking=False` ile kapatılır | HF API (kendim doğruladım) | `base.yaml` güncellendi. Kumru K6'daki aralığın biraz üstünde; karar senin |
+
+## Ek bulgular
+
+- **Sızıntı:** Ersoy ve Yıldız OSCAR testindeki 2.408 cümleyi eğitim ve doğrulamadan çıkardıklarını yazıyor. HF'deki CSV'lerde bunun yapıldığı ayrıca doğrulanmadı. Görev 01'deki tarama bu çifti zaten kapsıyor. Film yorumları ve tweetlerin OSCAR eğitim verisinde olup olmadığı yalnızca tarama ile anlaşılır.
+- **Kapı A riski:** Tweet setine uygulanan ön işleme yalnızca iki cümleyle anlatılmış ve işlenmiş kopya yayımlanmamış. Ayrıca mT5'in ışın sayısı gibi üretim ayarları makalede yok. 79,0'ı ±2 içinde yeniden üretmek bu yüzden beklenenden zor olabilir.
+- **Kumru ve GEC:** Kumru'nun model kartı, modelin Türkçe GEC dahil Cetvel ölçütünde çok daha büyük modelleri geçtiğini söylüyor. Pilot için olumlu bir işaret, ama kendi ölçümümüz esas alınır.
+- **Daha yeni Qwen:** `Qwen/Qwen3.5-2B` (Mart 2026) var, ama görüntü-metin modeli, karma (Gated DeltaNet) mimarili ve en yeni `transformers` sürümünü istiyor. T4 ve QLoRA için riskli; önermiyorum.
+- **M2 scorer yavaşlığı doğrulandı:** NUS m2scorer'ın 8 ve 12 numaralı GitHub konuları kaynaktan çok farklı hipotezlerde saatlerce süren skorlamayı belgeliyor. Bakımcının önerisi, çok farklı hipotez yerine kaynak cümleyi koymak. Bu, emniyet kemerimizle aynı fikir. Zaman aşımı eklenecekse aynı kural bütün sistemlere uygulanmalı ve raporda yazılmalı; yoksa skorlar yayımlanmış sayılarla kıyaslanamaz.
+- **Kaggle:** Kaggle'ın kendi belgeleri JavaScript ile yüklendiği için okunamadı. İkincil kaynaklar: T4 x2 ya da P100, haftada yaklaşık 30 GPU saati, oturum başına 12 saat. Kesin kota hesap ayarlarındaki sayfadan kontrol edilmeli.

@@ -11,10 +11,12 @@ data:
   gecturk:
     hf_id: GGLab/GECTurk            # doğrulandı: train, dev, test, movie_reviews (parquet, Apache-2.0)
   oscar_gec:
-    source: https://github.com/asimokby/Turkish-GEC   # HF kimlikleri README'den alınacak (görev 01)
+    source: https://github.com/asimokby/Turkish-GEC
+    hf_id_train: asimokby/Turkish-OSCAR-GEC          # train.csv + val.csv, MIT (rapor 01)
+    hf_id_test: asimokby/Turkish-GEC-Evaluation      # 2.408 cümle, M2 (ERRANT-TR), MIT
     streaming: true                 # 2,3 milyon cümlenin tamamı indirilmez
   tweets:
-    source: https://github.com/atubakoksal/annotated_tweets   # görev 01'de doğrulanacak
+    source: https://github.com/atubakoksal/annotated_tweets   # data.txt, 2.000 tweet, lisans yok (rapor 01)
 
 sampling:
   gecturk_n: 12000                  # D1 ve D2'de aynı GECTurk alt kümesi kullanılır
@@ -24,8 +26,8 @@ sampling:
   oscar_dev_size: 500               # eşik ve model seçimi için; test setlerine dokunulmaz
 
 model:
-  candidates:                       # HF kimlikleri görev 03'te doğrulanacak
-    - vngrs-ai/Kumru-2B
+  candidates:                       # kimlik ve lisans doğrulandı (rapor 00); sohbet şablonu görev 03'te denenir
+    - vngrs/Kumru-2B                # eski kimlik vngrs-ai/Kumru-2B yönlendiriyor; 2,38B parametre
     - Qwen/Qwen3-1.7B
   chosen: null                      # Kapı B'de doldurulur, sonra değişmez
 

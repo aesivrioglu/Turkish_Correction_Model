@@ -27,6 +27,16 @@ Bunlar planda doğru kabul edildi ama kontrol edilmedi. İlgili görevde ilk iş
 | Aday modeller T4'te fp16 ile kararlı eğitilir | Kayıp NaN olur | Mini eğitimde kaybı izle | 03 |
 | Kumru-2B ve Qwen küçük modelinin Hugging Face kimlikleri `configs/base.yaml` içindeki gibi | Model indirilemez | Model kartlarını aç, lisansı ve sohbet şablonunu kontrol et | 03 |
 
+**Sonuç (2026-11-12, `raporlar/00_varsayim_dogrulama.md`):**
+
+- ERRANT-TR yayımlanmış (MIT) ve kullanılabilir.
+- OSCAR GEC verisinin lisansı MIT. Tweet seti ve mT5 ağırlıklarının lisansı yok.
+- OSCAR GEC verisi ve mT5 modeli Hugging Face'te var.
+- Ersoy ve Yıldız M2 scorer **değil**, ERRANT-TR kullanmış.
+- fp16 kararlılığı pilotta ölçülecek.
+- Kumru'nun kimliği `vngrs/Kumru-2B` olarak düzeltildi.
+- Yeni tuzak: GECTurk'ün HF kopyasında düzeltilmiş cümle yok; M2 dosyaları Drive'da.
+
 ## Bilinen tuzaklar
 
 ### Türkçe büyük ve küçük harf
