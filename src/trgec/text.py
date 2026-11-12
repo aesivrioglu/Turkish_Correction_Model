@@ -32,10 +32,13 @@ def squeeze_spaces(text: str) -> str:
 def normalize_for_match(text: str) -> str:
     """Sızıntı ve yineleme taraması için gevşek eşleştirme biçimi.
 
-    Unicode'u NFC'ye çevirir, Türkçe küçük harfe indirir, noktalamayı siler.
+    Unicode'u NFC'ye çevirir, birleşen noktayı (U+0307) siler, Türkçe küçük harfe
+    indirir, noktalamayı siler. Birleşen nokta, "İ" harfinin Python str.lower() ile
+    küçültülmesinden kalır ("i" + U+0307); silinmezse noktalama sayılıp kelimeyi böler.
     Yalnızca karşılaştırma içindir; eğitim ya da skorlama verisine uygulanmaz.
     """
     text = unicodedata.normalize("NFC", text)
+    text = text.replace("̇", "")
     text = tr_lower(text)
     text = _PUNCT_RE.sub(" ", text)
     return squeeze_spaces(text)

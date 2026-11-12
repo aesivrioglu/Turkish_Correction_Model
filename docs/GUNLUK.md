@@ -13,6 +13,22 @@ Kayıt biçimi:
 - Sıradaki adım:
 ```
 
+## 2026-11-13, görev 01 (adım 2: tokenizasyon)
+
+- Yapılan:
+  - OSCAR testi (`04cd0c3`) ve tweet seti (`06e9476`) sabit sürümle `data/raw/` altına indirildi.
+  - İki setin ve ERRANT-TR'nin tokenizasyonu incelendi (`raporlar/01_tokenizasyon.md`).
+  - `normalize_for_match` içindeki birleşen nokta hatası düzeltildi ve testi eklendi.
+- Ölçülen:
+  - OSCAR testi: 2.408 satır; `inp` ile M2 `S` satırı yalnızca 291 satırda aynı; hatasız satır 26 (%1,1); ortalama 25 token.
+  - Tweetler: 2.000 satır; hatasız 89 (%4,5); `|` işaretli 425 satır; 47 birleşen nokta.
+  - Testler: 31 geçti.
+- Karar ya da değişiklik: Yok. "Ortak biçimde doğal metin" önerisi kullanıcı onayı bekliyor.
+- Sorun ya da açık soru:
+  - GECTurk M2 dosyaları hâlâ yok; M2 `S` satırı ile parquet tokenlarının birebir aynı olduğu doğrulanamadı.
+  - Ersoy ve Yıldız'ın tweet çıktılarından hangi noktalamayı sildiği belirsiz (Kapı A riski).
+- Sıradaki adım: Onay gelince adım 3: OSCAR testi ve tweet dönüştürücüleri, sahte veriyle testleri.
+
 ## 2026-11-13, görev 01 (karar güncellemesi)
 
 - Yapılan:

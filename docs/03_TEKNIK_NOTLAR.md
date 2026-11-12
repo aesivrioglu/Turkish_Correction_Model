@@ -43,9 +43,18 @@ Bunlar planda doğru kabul edildi ama kontrol edilmedi. İlgili görevde ilk iş
 
 Python'da `"I".lower()` sonucu `"i"`, `"İ".lower()` sonucu ise `"i"` artı birleşen nokta olur. İkisi de Türkçe için yanlıştır. Karşılaştırma ve yineleme taramasında `trgec.text.tr_lower` kullanılmalı. Eğitim verisine küçük harfe çevirme uygulanmaz; büyük harf hataları GECTurk kurallarının parçasıdır.
 
+Bu tuzak gerçek veride de karşımıza çıktı. #Turki$hTweets'in kaynak sütununda 47 birleşen nokta (U+0307) var (`yedi̇m`); veri seti `str.lower()` ile küçültülmüş. `normalize_for_match` bu noktayı noktalama sayıp kelimeyi bölüyordu (`yedi m`). 2026-11-13'te düzeltildi ve test eklendi. Ölçütün kaynak metni değiştirilmez.
+
 ### Noktalama ve boşluklar
 
 M2 biçimi boşlukla ayrılmış token dizini kullanır. GECTurk cümlelerinde noktalamanın ayrı token olup olmadığı görev 01'de incelenmeli. Model noktalama çevresindeki boşlukları "düzeltirse" skorlayıcı bunu hata sayar. Eğitim hedefleri kaynakla aynı tokenizasyonu korumalı.
+
+Görev 01 sonucu (`raporlar/01_tokenizasyon.md`):
+
+- GECTurk'te noktalama kelimeye bitişik.
+- OSCAR testinin `inp`/`ref` dosyaları doğal metin; M2 dosyasında noktalama ayrı, çünkü ERRANT-TR Zemberek ile kendisi tokenize ediyor.
+- Tweetlerde `|` işareti boşluk anlamına geliyor.
+- Ortak biçimde doğal metin saklanması önerildi ve kullanıcı onayı bekliyor.
 
 ### Sızıntı
 
