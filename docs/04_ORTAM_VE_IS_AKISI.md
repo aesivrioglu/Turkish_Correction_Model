@@ -37,7 +37,7 @@ Kod yerelde Claude Code ile yazılır ve test edilir. Kaggle yalnızca GPU gerek
 3. Kaggle not defterinde Add-ons > Secrets altına `HF_TOKEN` ekle. Depo özelse `GITHUB_TOKEN` da ekle.
 4. `kaggle/calistirici.ipynb` dosyasını Kaggle'a yükle (File > Import Notebook).
 5. Sağ panelde Accelerator = GPU T4 x2, Internet = On yap.
-6. Not defterinde `GITHUB_USER` değerini kendi kullanıcı adınla değiştir.
+6. Not defterindeki `GITHUB_USER` (`aesivrioglu`) ve `REPO` (`Turkish_Correction_Model`) değerlerinin GitHub'daki depoyla aynı olduğunu kontrol et.
 
 ## Duman testi nedir?
 

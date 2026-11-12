@@ -6,7 +6,7 @@ Bu adımlar bir kez yapılır. Gereken: Git, Python 3.10 ya da üstü, bir GitHu
 
 GitHub'da yeni bir depo aç:
 
-- Ad: `turkce-yazim-duzeltici`
+- Ad: `Turkish_Correction_Model` (yerel klasörün adı `turkce-yazim-duzeltici` olarak kalabilir)
 - Görünürlük: Private (lisans kontrolleri bitene kadar)
 - README, .gitignore ve lisans **ekleme**; bunlar bu klasörde zaten var.
 
@@ -20,7 +20,7 @@ git init
 git add .
 git commit -m "Proje iskeleti, kararlar ve yardımcı modüller"
 git branch -M main
-git remote add origin https://github.com/KULLANICI_ADIN/turkce-yazim-duzeltici.git
+git remote add origin https://github.com/aesivrioglu/Turkish_Correction_Model.git
 git push -u origin main
 ```
 
