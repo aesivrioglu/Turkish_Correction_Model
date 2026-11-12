@@ -1,0 +1,9 @@
+# Kaggle (GPU) ortamı. Sürümler pilotta çalışan kombinasyona göre sabitlenir (görev 03).
+pyyaml
+datasets
+transformers
+peft
+accelerate
+bitsandbytes
+huggingface_hub
+sentencepiece

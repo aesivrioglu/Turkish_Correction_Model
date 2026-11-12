@@ -1,0 +1,25 @@
+# Veri ve çıktılar depoya girmez (küçük olsalar da lisansları farklı)
+data/raw/*
+data/processed/*
+outputs/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!outputs/.gitkeep
+
+# Gizli bilgiler
+.env
+kaggle.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# İşletim sistemi ve editör
+.DS_Store
+.vscode/
+.idea/

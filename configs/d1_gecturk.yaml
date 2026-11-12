@@ -1,0 +1,6 @@
+# D1: yalnızca GECTurk. Talimat: "düzelt ve etiketle".
+inherits: base.yaml
+run_name: d1_gecturk
+mix:
+  gecturk: true
+  oscar: false

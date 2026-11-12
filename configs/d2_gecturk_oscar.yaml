@@ -1,0 +1,7 @@
+# D2: D1'deki aynı GECTurk alt kümesi + OSCAR GEC alt kümesi.
+# GECTurk örnekleri "düzelt ve etiketle", OSCAR örnekleri "yalnızca düzelt" talimatını alır.
+inherits: base.yaml
+run_name: d2_gecturk_oscar
+mix:
+  gecturk: true
+  oscar: true

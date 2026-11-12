@@ -1,0 +1,7 @@
+# Yerel geliştirme (yalnızca CPU). Sürümler ilk kurulumdan sonra "pip freeze" ile sabitlenir.
+pyyaml
+pytest
+datasets
+pandas
+pyarrow
+huggingface_hub
