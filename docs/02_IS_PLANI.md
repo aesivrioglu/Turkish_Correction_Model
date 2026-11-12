@@ -38,12 +38,13 @@ Görev dosyası: `gorevler/01_veri_hazirligi.md`
 
 Görev dosyası: `gorevler/02_degerlendirme_hatti.md`
 
-- [ ] Ersoy ve Yıldız'ın hangi skorlayıcıyı kullandığını doğrula
+- [x] Ersoy ve Yıldız'ın hangi skorlayıcıyı kullandığını doğrula (ERRANT-TR; K15 notu)
+- [x] ERRANT-TR'nin kullanılabilir olup olmadığını doğrula (kullanılabilir, MIT)
+- [ ] ERRANT-TR'yi kur; OSCAR, tweetler ve film yorumlarında skorlayıcı olarak bağla
 - [ ] mT5 modelini üç sette çalıştır; tweetlerde 79,0'ı yeniden üret
 - [ ] M2 scorer'ı film yorumları için kur, zaman aşımı ekle
 - [ ] GECTurk etiketleyicisini çalıştırmayı dene (en fazla yarım gün)
 - [ ] Skorlayıcıdan cümle bazlı sayıları çıkar, bootstrap'a bağla
-- [ ] ERRANT-TR'nin kullanılabilir olup olmadığını doğrula
 
 **Kapı A:** mT5'in tweetlerdeki skoru ±2 puan içinde tutuyor. Tutmuyorsa eğitime geçilmez, hat düzeltilir.
 

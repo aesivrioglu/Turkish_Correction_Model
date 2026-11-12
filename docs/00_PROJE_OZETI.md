@@ -18,9 +18,10 @@ Bugün yayımlanmış hiçbir model üç gerçek test setinde birden iyi değil.
 | Model | Film yorumları | OSCAR GEC test | Tweetler |
 | --- | --- | --- | --- |
 | GECTurk etiketleyicisi (2023) | 84,2 | 14,7 | GECTurk modelleri 42,3 ile 44,5 arasında |
-| mT5, OSCAR GEC ile eğitilmiş (2024) | 28,1 | 62,8 | 79,0 |
+| mT5, OSCAR GEC ile eğitilmiş (2024) | 28,1 | 55,4 | 79,0 |
+| mT5, GPT GEC ile eğitilmiş (2024) | 37,6 | 62,8 | 75,8 |
 
-Değerler F0.5'tir ve yayımlanmış çalışmalardan alınmıştır (bkz. `05_KAYNAKLAR.md`). Etiketleyici 25 kurala sıkışıp sıradan yazım hatalarını göremiyor; mT5 ise kural tabanlı hataları kaçırıyor. Üç sette de dengeli tek bir model projenin ana iddiasıdır.
+Değerler F0.5'tir ve yayımlanmış çalışmalardan alınmıştır (bkz. `05_KAYNAKLAR.md`). Film yorumlarında etiketleyicinin skoru M2 scorer ile, diğer bütün sayılar ERRANT-TR ile hesaplanmıştır (K15). Etiketleyici 25 kurala sıkışıp sıradan yazım hatalarını göremiyor; mT5 ise kural tabanlı hataları kaçırıyor. Üç sette de dengeli tek bir model projenin ana iddiasıdır.
 
 ## Kapsam
 
@@ -41,7 +42,7 @@ Değerler F0.5'tir ve yayımlanmış çalışmalardan alınmıştır (bkz. `05_K
 ## Başarı ölçütleri (danışmanla netleştirilecek)
 
 - Film yorumlarında etiketleyicinin 84,2'lik F0.5 skoruna ulaşmak ya da geçmek
-- OSCAR ve tweet setlerinde mT5'in 62,8 ve 79,0'lık skorlarına yaklaşmak
+- OSCAR ve tweet setlerinde OSCAR GEC ile eğitilmiş mT5'in 55,4 ve 79,0'lık skorlarına yaklaşmak. OSCAR testinde en yüksek yayımlanmış sonuç olan GPT GEC (mT5) 62,8 ikinci referans olarak raporlanır.
 - Hatasız cümlelerde gereksiz düzeltme oranını %5'in altında tutmak
 
 Film yorumlarında 84,2 geçilemese bile üç setteki denge ve kural bazında analiz geçerli bir bulgudur.

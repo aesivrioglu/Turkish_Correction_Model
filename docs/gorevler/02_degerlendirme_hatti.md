@@ -16,11 +16,14 @@ Bir tahmin dosyasını alıp her test setinde resmi araçla P, R, F0.5 ve güven
 
 Ersoy ve Yıldız'ın makalesini (arXiv 2405.15320) ve deposunu oku: OSCAR test ve tweet skorları hangi araçla hesaplanmış? Bulguyu `docs/raporlar/02_skorlayici.md` dosyasına yaz. Belirsizse kullanıcıya sor; tahminle ilerleme.
 
+**2026-11-13:** Araç belli: ERRANT-TR (K15 notu, `raporlar/00_varsayim_dogrulama.md`). Bu adımda kalan iş, `compare_m2.py` komutunun bayraklarını (`-b 0.5`, `-cse`, `-cat` vb.) belirlemek ve `02_skorlayici.md` dosyasına yazmak. Yazarların deposunda betik yok; bayraklar Kapı A'da 79,0 üretilerek doğrulanır.
+
 ### 2. mT5'i yeniden üret (Kapı A)
 
-- OSCAR GEC ile eğitilmiş mT5 modelini üç test setinde çalıştır (`scripts/predict.py` içinde genel bir seq2seq yolu ya da ayrı küçük bir betik). GPU Kaggle'da; önce yerelde 5 cümleyle dene.
+- OSCAR GEC ile eğitilmiş mT5 modelini (`asimokby/Turkish-OSCAR-GEC-v0`) üç test setinde çalıştır (`scripts/predict.py` içinde genel bir seq2seq yolu ya da ayrı küçük bir betik). GPU Kaggle'da; önce yerelde 5 cümleyle dene.
 - Tahminleri JSONL olarak kaydet.
-- Tweet setinde F0.5 hesapla. Hedef: 79,0 ± 2.
+- Tweet setine Ersoy ve Yıldız'ın iki dönüşümünü uygula: altın cümlelerin ilk harfi büyütülür, model çıktılarındaki noktalama silinir.
+- Tweet setinde ERRANT-TR ile F0.5 hesapla. Hedef: 79,0 ± 2. İkincil kontrol: OSCAR testinde 55,4, film yorumlarında 28,1 (ikisi de ERRANT-TR).
 
 Tutmuyorsa sırayla kontrol et: tokenizasyon, büyük ve küçük harf, test setinin sürümü, üretim ayarları (ışın sayısı, en fazla uzunluk), skorlayıcı sürümü.
 
@@ -38,9 +41,16 @@ Tutmuyorsa sırayla kontrol et: tokenizasyon, büyük ve küçük harf, test set
 
 Skorlayıcıdan cümle başına (tp, fp, fn) sayılarını çıkar ve `trgec.bootstrap` işlevlerine bağla. Toplam sayılardan hesaplanan F0.5 ile skorlayıcının kendi F0.5 çıktısının aynı olduğunu test et.
 
-### 6. ERRANT-TR
+### 6. ERRANT-TR (2. adımdan önce kurulur)
 
-Kullanılabilir bir araç olarak yayımlanmış mı? Varsa kur. Yoksa OSCAR ve tweet setlerindeki tür analizi için veri setlerinin kendi etiketlerini kullanma planını yaz.
+Yayımlanmış ve kullanılabilir olduğu doğrulandı (`github.com/harunuz/erranttr`, MIT). Kur:
+
+- Bağımlılıklar `rapidfuzz` ve `zemberek-python`. Eklemeden önce kullanıcıya sor.
+- İki kaynak dosya (`tr_TR.aff`, `TS_Corpus_Turkish_Word_List.txt`) deponun 0.1.0 sürüm sayfasından `tr/resources/` altına konur.
+- Depo paketlenmemiş ve `process.py` sabit bir dosya adı okuyor. İnce bir sarmalayıcı yaz: paralel cümleler → M2 → `compare_m2.py`.
+- M2 scorer'daki akıl sağlığı testlerinin aynısını uygula: altın düzeltme hipotez olarak verilince F0.5 = 1,0; kaynak cümle verilince recall = 0.
+
+ERRANT-TR hem skorlayıcı (OSCAR, tweetler, film yorumları) hem de hata türü analizi için kullanılır (K15).
 
 ### 7. `scripts/evaluate.py`
 
@@ -55,6 +65,7 @@ mT5'in tweet skoru ±2 puan içinde yeniden üretildi. Bu sağlanmadan görev 03
 - [ ] Skorlayıcı raporu yazıldı
 - [ ] Kapı A geçildi; elde edilen skor `docs/GUNLUK.md` içinde
 - [ ] M2 scorer akıl sağlığı testleri geçiyor
+- [ ] ERRANT-TR kuruldu, akıl sağlığı testleri geçiyor
 - [ ] Etiketleyici denemesinin sonucu yazıldı
 - [ ] `scripts/evaluate.py` üç test seti ve iki doğrulama seti için çalışıyor
 - [ ] `pytest -q` geçiyor

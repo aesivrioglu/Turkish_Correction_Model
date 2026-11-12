@@ -102,6 +102,12 @@ Her madde üç bölümden oluşur: **Karar**, **Neden**, **Bedel** (bu kararla v
 - **Neden:** Farklı skorlayıcılar aynı çıktıya farklı skor verir. Yayımlanmış sayılarla kıyas ancak aynı araçla anlamlıdır.
 - **Bedel:** İki ayrı değerlendirme yolu kurmak gerekebilir. Hangi aracın kullanıldığı görev 02'de doğrulanacak.
 
+**2026-11-13 notu (kullanıcı onayıyla):** Araştırma, Ersoy ve Yıldız'ın üç test setinin hepsini ERRANT-TR ile skorladığını gösterdi (makale, bölüm 4.2; ayrıntı `raporlar/00_varsayim_dogrulama.md`). Film yorumlarındaki iki yayımlanmış sayı farklı araçlardan geliyor: etiketleyicinin 84,2'si GECTurk'ün M2 scorer'ıyla, mT5'in 28,1'i ERRANT-TR ile hesaplanmış. Karar şöyle güncellendi:
+
+- OSCAR GEC test ve tweetler: ERRANT-TR (`github.com/harunuz/erranttr`, `commands/compare_m2.py`, F0.5).
+- Film yorumları: iki araç birlikte çalıştırılır. M2 scorer sonucu 84,2 ile, ERRANT-TR sonucu 28,1 ile kıyaslanır. Raporda her sayının yanına aracı yazılır.
+- Yeni bedel: ERRANT-TR iki yeni bağımlılık ister (`rapidfuzz`, `zemberek-python`); eklenmeden önce onay alınır. Yazarlar tam komutu yayımlamadığı için bayraklar Kapı A'da 79,0 yeniden üretilerek sabitlenir.
+
 ### K16. Test setlerine yalnızca en sonda bakılır
 
 - **Karar:** Model seçimi, emniyet kemeri eşiği ve diğer ayarlar doğrulama setlerinde yapılır: GECTurk dev ve OSCAR eğitim verisinden ayrılan 500 cümlelik dilim.

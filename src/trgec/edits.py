@@ -2,7 +2,7 @@
 
 Bu modül yalnızca iç kullanım içindir (emniyet kemeri, aşırı düzeltme oranı,
 hızlı hata incelemesi). Raporlanan P, R ve F0.5 değerleri için her test setinin
-yayımlanmış skorunda kullanılan resmi araç kullanılır (bkz. K12).
+yayımlanmış skorunda kullanılan resmi araç kullanılır (bkz. K15).
 """
 
 from __future__ import annotations

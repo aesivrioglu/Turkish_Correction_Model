@@ -2,7 +2,7 @@
 
 LLM'ler düzeltmek yerine cümleyi yeniden yazmaya eğilimlidir. Bu son işlem adımı
 yeniden eğitim gerektirmez. Eşik yalnızca doğrulama setinde ayarlanır, test
-setlerinde ayarlanmaz (bkz. K13).
+setlerinde ayarlanmaz (bkz. K14, K16).
 """
 
 from __future__ import annotations

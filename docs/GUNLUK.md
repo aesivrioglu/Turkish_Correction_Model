@@ -13,6 +13,20 @@ Kayıt biçimi:
 - Sıradaki adım:
 ```
 
+## 2026-11-13, görev 01 (karar güncellemesi)
+
+- Yapılan:
+  - K15'e tarihli not eklendi.
+  - `00_PROJE_OZETI.md` içindeki temel tablo ve başarı ölçütü düzeltildi.
+  - Görev 02, iş planı ve `base.yaml` (`eval.scorers`) yeni karara uyduruldu.
+  - Koddaki yanlış karar atıfları düzeltildi (K12 → K15, K13 → K14/K16).
+- Ölçülen: Yok.
+- Karar ya da değişiklik:
+  - K15 güncellendi: OSCAR ve tweetlerde ERRANT-TR; film yorumlarında M2 scorer ve ERRANT-TR birlikte.
+  - OSCAR testinde hedef 55,4 (OSCAR GEC mT5). 62,8 (GPT GEC mT5) ikinci referans.
+- Sorun ya da açık soru: GECTurk M2 dosyaları henüz `data/raw/gecturk/` altında değil.
+- Sıradaki adım: Görev 01, adım 2 (tokenizasyon) ve adım 3 (dönüştürücüler).
+
 ## 2026-11-12, görev 01 (adım 1)
 
 - Yapılan:

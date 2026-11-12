@@ -48,3 +48,7 @@ eval:
   beta: 0.5
   n_boot: 1000
   m2_timeout_seconds: 60            # M2 scorer çok değişmiş cümlelerde yavaşlayabilir
+  scorers:                          # K15 (2026-11-13 notu): her sette yayımlanmış skorun aracı
+    movie_reviews: [m2scorer, errant_tr]   # 84,2 M2 scorer ile, 28,1 ERRANT-TR ile kıyaslanır
+    oscar_test: [errant_tr]
+    tweets: [errant_tr]

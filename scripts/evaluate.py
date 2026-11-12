@@ -5,7 +5,9 @@ Bu betik henüz yazılmadı. Görev tanımı: docs/gorevler/02_degerlendirme_hat
 Girdi:  tahmin dosyası (JSONL: {"id", "source", "hypothesis"}) ve test setinin adı
 Çıktı:  outputs/eval/<calisma>/<set>.json  (P, R, F0.5, güven aralığı, aşırı düzeltme oranı)
 
-Kural (K12): Her test setinde, o setin yayımlanmış skorunda kullanılan araç kullanılır.
+Kural (K15): Her test setinde, o setin yayımlanmış skorunda kullanılan araç kullanılır.
+Araçlar configs/base.yaml içinde eval.scorers altında: film yorumlarında M2 scorer ve
+ERRANT-TR, OSCAR test ve tweetlerde ERRANT-TR.
 Hazır yardımcılar: trgec.bootstrap, trgec.metrics, trgec.guard
 """
 
