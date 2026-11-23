@@ -82,10 +82,10 @@ Her setten 20 rastgele örneği (kaynak, hedef, kurallar) ekrana yazdıran bir k
 
 ## Bitti sayılma ölçütleri
 
-- [ ] `python scripts/prepare_data.py --config configs/base.yaml` baştan sona hatasız çalışıyor
-- [ ] `data/processed/` altında üç test seti, iki doğrulama seti, iki eğitim alt kümesi var
-- [ ] Alt kümede her kuraldan en az 50 örnek var (toplamı 50'den az olanlar hariç)
-- [ ] Sızıntı taraması sıfır çakışma bırakıyor
-- [ ] İki rapor yazıldı
+- [x] `python scripts/prepare_data.py --config configs/base.yaml` baştan sona hatasız çalışıyor (2026-11-24)
+- [x] `data/processed/` altında üç test seti, iki doğrulama seti, iki eğitim alt kümesi var (ayrıca `oscar_dev_clean`)
+- [x] Alt kümede her kuraldan en az 50 örnek var (toplamı 50'den az olanlar hariç: `rule_19` 3, `rule_21` 38)
+- [x] Sızıntı taraması sıfır çakışma bırakıyor (`--step leakage`)
+- [x] İki rapor yazıldı (`01_veri_kaynaklari.md`, `01_veri_raporu.md`)
 - [ ] Kullanıcı 20'şer örneği kontrol etti
 - [ ] `pytest -q` geçiyor, `docs/GUNLUK.md` güncellendi

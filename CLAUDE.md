@@ -6,7 +6,9 @@ Bu dosya Claude Code'un her oturumda okuduğu proje belleğidir. Kısa tutulur; 
 
 Türkçe metindeki yazım ve dilbilgisi hatalarını bulan, düzelten ve ihlal edilen TDK kuralını gösteren bir model ile demo. Üniversite bitirme (capstone) projesi; tek kişi yürütüyor.
 
-Araştırma sorusu: Sentetik veriyle (GECTurk) eğitilmiş küçük bir LLM, organik yazım hatalarıyla (OSCAR GEC) desteklendiğinde üç gerçek test setinde 2023 etiketleyicisini ve 2024 mT5 modelini geçebiliyor mu?
+Hedef: Türkçe yazım hatalarını düzelten, hafif (yaklaşık 0,2–2,4B parametre) ve iyi genellenen bir model. Üç gerçek test seti hedef değil, genellenebilirliğin ölçüsüdür.
+
+Araştırma soruları (K3, 2026-11-23 notu): (1) Ücretsiz bir T4'te QLoRA ile ince ayarlanan hafif modeller üç gerçek test setinde 2023 etiketleyicisine ve 2024 mT5 modeline ne kadar yaklaşıyor ya da onları geçiyor; model küçüldükçe ne kaybediliyor? (2) Sentetik veriye (GECTurk) organik yazım hataları (OSCAR GEC) ve keşif fazındaki teknikleri eklemek görülmemiş alanlara geçişi nasıl etkiliyor?
 
 ## Önce bunları oku
 
@@ -18,7 +20,8 @@ Araştırma sorusu: Sentetik veriyle (GECTurk) eğitilmiş küçük bir LLM, org
 ## Değişmez kurallar
 
 - **Kapı A:** Yayımlanmış temel skorlar yeniden üretilmeden model eğitimi kodu Kaggle'da çalıştırılmaz.
-- **Kapı B:** Model ve veri boyutu seçildikten sonra değişmez.
+- **Kapı B:** Ana model, veri boyutu, `max_len`, değerlendirme protokolü ve keşif fazının teknik listesi seçildikten sonra değişmez (K20 notu).
+- **Keşif fazı sınırlıdır (K25):** en fazla üç teknik, yalnızca doğrulama setlerinde. Her yapılandırma test setlerinde bir kez ölçülür.
 - **Test setlerine dokunma:** Film yorumları, OSCAR test ve tweet setleri yalnızca nihai değerlendirmede kullanılır. Eşik, model ve hiperparametre seçimi doğrulama setlerinde yapılır.
 - **Skorlayıcı tutarlılığı:** Her test setinde, o setin yayımlanmış skorunda kullanılan araç kullanılır. Kendi yazdığımız fark hesapları (`trgec.edits`) yalnızca iç kullanım içindir.
 - **Türkçe harfler:** Karşılaştırmalarda `str.lower()` değil `trgec.text.tr_lower` kullan.
@@ -57,4 +60,4 @@ tests/         pytest testleri
 
 ## Durum
 
-Başlangıç: iskelet ve yardımcı modüller hazır, testler geçiyor. Sıradaki görev: `docs/gorevler/01_veri_hazirligi.md`.
+Güncel durum ve sıradaki adım için `docs/GUNLUK.md` dosyasının en üstündeki kayda bak. Görev 01'de yalnızca kullanıcının elle kontrolü kaldı; Kapı A geçildi (2026-11-23). Sıradaki iş görev 03'ün yerel kısmı (`docs/gorevler/03_pilot_ve_model_secimi.md`).

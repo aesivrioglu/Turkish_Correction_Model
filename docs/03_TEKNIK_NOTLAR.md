@@ -45,6 +45,18 @@ Python'da `"I".lower()` sonucu `"i"`, `"İ".lower()` sonucu ise `"i"` artı birl
 
 Bu tuzak gerçek veride de karşımıza çıktı. #Turki$hTweets'in kaynak sütununda 47 birleşen nokta (U+0307) var (`yedi̇m`); veri seti `str.lower()` ile küçültülmüş. `normalize_for_match` bu noktayı noktalama sayıp kelimeyi bölüyordu (`yedi m`). 2026-11-13'te düzeltildi ve test eklendi. Ölçütün kaynak metni değiştirilmez.
 
+### Film yorumlarında örtüşen düzenlemeler
+
+Film yorumları M2 dosyasında üç cümlede (6, 75, 125) aynı kelimeye birden çok düzenleme yazılmış. Düzenlemeleri sırayla uygulamak bu cümlelerde hata verir ya da yanlış cümle üretir. `trgec.convert.resolve_overlapping_edits` örtüşenlerden en geniş olanı (eşitse sonra yazılanı) seçer. GECTurk'ün train, dev ve test dosyalarında örtüşme yok.
+
+### mT5 temel modeli uzun cümleleri kesiyor
+
+`asimokby/Turkish-OSCAR-GEC-v0`, 48 tokenı aşan girdilerin yaklaşık dörtte üçünde çıktıyı tam 48. tokenda bitiriyor (çıktı sınırına takılmadan, bitiş tokenıyla). Yayımlanmış OSCAR testi skoru (55,4) bu kesmeyi içeriyor. Kendi modellerimizi OSCAR testinde bu sayıyla kıyaslarken skoru kısa ve uzun cümleler için ayrı da vermek gerekir (`raporlar/02_skorlayici.md`).
+
+### OSCAR hedefleri kısmen düzeltilmiş
+
+OSCAR GEC eğitim verisinin hedef cümlelerinde düzeltilmemiş hatalar kalabiliyor (`ayni`, `yapiyordum`). Hedeflerin nasıl üretildiği (elle mi, otomatik mi) Ersoy ve Yıldız'ın makalesinden henüz doğrulanmadı; yalnızca veride gözlendi. Bu, OSCAR'dan üretilen hatasız örnekleri (K27) doğrudan etkiler; oranı elle kontrolde sayılacak.
+
 ### Noktalama ve boşluklar
 
 M2 biçimi boşlukla ayrılmış token dizini kullanır. GECTurk cümlelerinde noktalamanın ayrı token olup olmadığı görev 01'de incelenmeli. Model noktalama çevresindeki boşlukları "düzeltirse" skorlayıcı bunu hata sayar. Eğitim hedefleri kaynakla aynı tokenizasyonu korumalı.
@@ -54,7 +66,11 @@ Görev 01 sonucu (`raporlar/01_tokenizasyon.md`):
 - GECTurk'te noktalama kelimeye bitişik.
 - OSCAR testinin `inp`/`ref` dosyaları doğal metin; M2 dosyasında noktalama ayrı, çünkü ERRANT-TR Zemberek ile kendisi tokenize ediyor.
 - Tweetlerde `|` işareti boşluk anlamına geliyor.
-- Ortak biçimde doğal metin saklanması önerildi ve kullanıcı onayı bekliyor.
+- Ortak biçimde doğal metin saklanması 2026-11-21'de onaylandı (K24).
+
+### Uzun OSCAR satırları
+
+OSCAR GEC eğitim verisinde cümle yerine sayfa dökümü olan satırlar var: ilk 20.000 satırın en uzunu 15.475 kelime, binde biri 540 kelimeden uzun (`raporlar/03_model_adaylari.md`, bölüm 10). Token sınırını aşan örnek kırpılmaz, eğitimden çıkarılır; kırpılan hedef modele yarım cevap öğretir. Süzme tokenizer'a değil kelime sayısına göre yapılmalı ki bütün adaylar aynı veriyi görsün. OSCAR testinde de 453 kelimelik girdi var; çıkarımda uzun satırların cümlelere bölünmesi gerekecek.
 
 ### Sızıntı
 

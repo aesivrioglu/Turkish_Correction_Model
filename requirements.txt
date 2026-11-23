@@ -5,3 +5,20 @@ datasets
 pandas
 pyarrow
 huggingface_hub
+
+# ERRANT-TR (görev 02, K15). Kullanıcı onayı: 2026-11-23.
+rapidfuzz
+zemberek-python
+setuptools<81        # zemberek-python 'pkg_resources' ister; setuptools 81 ve sonrası bunu içermez
+
+# Temel model (mT5) çıkarımı ve eğitim betiğinin yerel duman testi. Kullanıcı onayı: 2026-11-23.
+# torch'un yalnızca CPU sürümü kurulur (yerelde GPU kullanılmaz):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch
+transformers
+sentencepiece        # mT5 tokenizer'ı
+
+# Eğitim betiğinin yerel duman testi (LoRA). Kullanıcı onayı: 2026-11-24.
+# bitsandbytes yerele kurulmaz: 4-bit nicemleme GPU ister (requirements-kaggle.txt).
+peft
+accelerate

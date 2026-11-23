@@ -1,9 +1,10 @@
-# Kaggle (GPU) ortamı. Sürümler pilotta çalışan kombinasyona göre sabitlenir (görev 03).
+# Kaggle (GPU) ortamı. transformers, peft ve accelerate yerel duman testinin geçtiği sürümlere
+# sabitlendi (2026-11-24); bitsandbytes pilotta çalışan sürüme göre sabitlenecek (görev 03).
 pyyaml
 datasets
-transformers
-peft
-accelerate
+transformers==5.24.0
+peft==0.22.0
+accelerate==1.16.0
 bitsandbytes
 huggingface_hub
 sentencepiece

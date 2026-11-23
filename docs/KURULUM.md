@@ -29,10 +29,32 @@ git push -u origin main
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install torch --index-url https://download.pytorch.org/whl/cpu   # yalnızca CPU sürümü (yaklaşık 250 MB)
 pip install -r requirements.txt
 pip install -e .
-pytest -q                        # 30 test geçmeli
+pytest -q                        # bütün testler geçmeli
 ```
+
+### ERRANT-TR (değerlendirme için)
+
+OSCAR testi, tweetler ve film yorumları ERRANT-TR ile skorlanır (K15). Araç paketlenmemiş olduğu için depoya girmez; `external/` altına elle kurulur:
+
+```bash
+mkdir -p external && cd external
+git clone https://github.com/harunuz/erranttr.git
+cd erranttr && git checkout 56cf0a3
+cd erranttr/tr/resources
+curl -L -O https://github.com/harunuz/erranttr/releases/download/v0.1.0/tr_TR.aff
+curl -L -O https://github.com/harunuz/erranttr/releases/download/v0.1.0/TS_Corpus_Turkish_Word_List.txt.zip
+unzip TS_Corpus_Turkish_Word_List.txt.zip
+```
+
+Notlar:
+
+- Bağımlılıklar `requirements.txt` içinde: `rapidfuzz`, `zemberek-python` ve `setuptools<81`.
+- `zemberek-python`, `antlr4-python3-runtime` 4.8 sürümüne bağlıdır ve bu sürüm Python 3.13'te kaldırılan `typing.io` modülünü ister. `trgec.errant_tr` bunu küçük bir yamayla çözer; ayrı bir Python sürümü gerekmez.
+- Kurulum yoksa ERRANT-TR testleri atlanır, diğer testler çalışır.
+- Kurulumun doğruluğu: `tests/test_errant_tr.py` geçmeli. Ayrıntı `docs/raporlar/02_skorlayici.md` içinde.
 
 ## 4. Claude Code
 

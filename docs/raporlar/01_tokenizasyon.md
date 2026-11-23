@@ -51,7 +51,7 @@ Bu dosyalar `data/raw/` altında duruyor ve depoya girmiyor. Sürümler sabitlen
 - `erranttr/process.py` (commit `56cf0a3`), her satırı Zemberek'in `analyze_and_disambiguate` işleviyle çözümlüyor. Tokenizasyonu kendisi yapıyor. Yani **girdi doğal metindir**; önceden tokenize etmeye gerek yok.
 - `commands/parallel_to_m2.py`, İngilizce ERRANT'tan kopyalanmış ve Türkçe sürüme uyarlanmamış görünüyor (`token.text`, `args.tok`). Görev 02'de `process.py` yolu kullanılmalı.
 
-## Karar önerisi (onayını bekliyor)
+## Karar (2026-11-21'de onaylandı, K24)
 
 **Ortak JSONL biçiminde doğal metin saklanır; hiçbir sete tokenizasyon uygulanmaz.** Her skorlayıcı kendi tokenizasyonunu yapar:
 
@@ -68,6 +68,14 @@ Gerekçeler:
 3. Ölçüte özgü dönüşümler (tweetlerdeki büyük harf ve noktalama) tek bir yerde, değerlendirmede durur. Böylece hangi sayının hangi dönüşümle üretildiği açık kalır.
 
 Özgün etiketler `extra` alanında saklanır: tweet etiketleri ve OSCAR M2 düzenleme türleri.
+
+## Uygulama notu (2026-11-23, adım 3)
+
+Dönüştürücüler `src/trgec/convert.py` içinde yazıldı ve gerçek dosyalarda çalıştırıldı.
+
+- **OSCAR test:** 2.408 örnek; 26'sında kaynak ve hedef aynı. `inp` ve `ref` satırları olduğu gibi saklanıyor (3 satırdaki çift boşluk dahil). `extra.m2_types` içinde `noop` dışındaki 22.366 düzenleme türü var. 4 satırda M2'de düzenleme yok ama iki metin farklı.
+- **Tweetler:** 2.000 örnek; 89'unda kaynak ve hedef aynı. `|` işareti kaynak sütunda 85, hedef sütunda 425 satırda geçiyor (ikisinden birinde 489). Dosyada 127 alanda baş ya da sonda boşluk, 11 alanda çift boşluk vardı. Bu sütunlar boşlukla ayrılmış kelime dizisi olduğu için boşluklar temizleniyor; harflere ve işaretlere dokunulmuyor. Özgün biçim `extra.source_aligned` ve `extra.target_aligned` içinde duruyor; kelime başına etiketler bu özgün biçimle hizalı.
+- **Satır bölme:** dosyalar yalnızca satır sonu karakterinden bölünüyor. `str.splitlines()` U+2028 gibi karakterlerden de böldüğü için kullanılmıyor.
 
 ## Kapı A için not
 

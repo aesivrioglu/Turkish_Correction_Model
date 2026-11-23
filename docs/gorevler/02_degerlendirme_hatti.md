@@ -62,10 +62,10 @@ mT5'in tweet skoru ±2 puan içinde yeniden üretildi. Bu sağlanmadan görev 03
 
 ## Bitti sayılma ölçütleri
 
-- [ ] Skorlayıcı raporu yazıldı
-- [ ] Kapı A geçildi; elde edilen skor `docs/GUNLUK.md` içinde
+- [x] Skorlayıcı raporu yazıldı (`raporlar/02_skorlayici.md`; Kapı A sonucu ve karşılaştırma modu `cs` eklendi, 2026-11-24)
+- [x] Kapı A geçildi; elde edilen skor `docs/GUNLUK.md` içinde (2026-11-23: tweetlerde F0.5 78,5; yayımlanan 79,0)
 - [ ] M2 scorer akıl sağlığı testleri geçiyor
-- [ ] ERRANT-TR kuruldu, akıl sağlığı testleri geçiyor
+- [x] ERRANT-TR kuruldu, akıl sağlığı testleri geçiyor (2026-11-23)
 - [ ] Etiketleyici denemesinin sonucu yazıldı
-- [ ] `scripts/evaluate.py` üç test seti ve iki doğrulama seti için çalışıyor
+- [ ] `scripts/evaluate.py` üç test seti ve iki doğrulama seti için çalışıyor (2026-11-24: üç test seti, `oscar_dev` ve `oscar_dev_clean` ERRANT-TR ile hazır; GECTurk dev ve film yorumlarının M2 scorer tarafı M2 scorer'ı bekliyor)
 - [ ] `pytest -q` geçiyor

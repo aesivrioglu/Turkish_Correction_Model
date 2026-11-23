@@ -14,7 +14,8 @@ data:
     source: https://github.com/asimokby/Turkish-GEC
     hf_id_train: asimokby/Turkish-OSCAR-GEC          # train.csv + val.csv, MIT (rapor 01)
     hf_id_test: asimokby/Turkish-GEC-Evaluation      # 2.408 cümle, M2 (ERRANT-TR), MIT
-    streaming: true                 # 2,3 milyon cümlenin tamamı indirilmez
+    train_revision: 0f9026382aceafc4afc88170425c279379aeb880   # sabit sürüm (2024-05-08); train.csv 749 MB
+    streaming: true                 # veri diske kaydedilmez; akış halinde okunur
   tweets:
     source: https://github.com/atubakoksal/annotated_tweets   # data.txt, 2.000 tweet, lisans yok (rapor 01)
 
@@ -24,22 +25,55 @@ sampling:
   clean_ratio: 0.5
   min_per_rule: 50
   oscar_dev_size: 500               # eşik ve model seçimi için; test setlerine dokunulmaz
+  oscar_max_words: 70               # K11 (2026-11-23 notu): kaynak cümle en fazla 70 kelime
+  oscar_reserve: 1500               # yineleme ve sızıntı elemesinden sonra sayı eksilmesin diye yedek
+  oscar_clean_ratio: 0.25           # K27 (kullanıcı seçimi): OSCAR alt kümesinde hedef -> hedef hatasız örneklerin payı
+  oscar_clean_pool: 7500            # hatasız örnek havuzu (akıştan bağımsız ikinci rastgele örnek)
+  oscar_dev_clean_size: 250         # organik metinde aşırı düzeltmeyi doğrulamada ölçmek için
 
 model:
-  candidates:                       # kimlik ve lisans doğrulandı (rapor 00); sohbet şablonu görev 03'te denenir
-    - vngrs/Kumru-2B                # eski kimlik vngrs-ai/Kumru-2B yönlendiriyor; 2,38B parametre
-    - Qwen/Qwen3-1.7B
+  candidates:                       # K7 (2026-11-23 notu): sekiz aday; kimlik, parametre ve lisans doğrulandı (rapor 03a, bölüm 9)
+    - vngrs/Kumru-2B                # 2,38B; eski kimlik vngrs-ai/Kumru-2B yönlendiriyor
+    - newmindai/Mecellem-Qwen3-1.7B-TR   # 2,03B; base model
+    - Qwen/Qwen3-1.7B               # 2,03B; düşünme modu kapatılır
+    - utter-project/EuroLLM-1.7B-Instruct   # 1,66B
+    - asafaya/kanarya-2b            # 2,06B; base model, sohbet şablonu yok (görev 03'te tanımlanır)
+    - Qwen/Qwen3-0.6B               # 0,75B
+    - ytu-ce-cosmos/turkish-gpt2-large-750m-instruct-v0.1   # 0,77B; bağlam 1.024 token
+    - ufakai/ufakzeka-1             # 0,18B
   chosen: null                      # Kapı B'de doldurulur, sonra değişmez
 
+baselines:
+  oscar_mt5:                        # Kapı A: yayımlanmış skoru yeniden üretilecek model (Ersoy ve Yıldız 2024)
+    hf_id: asimokby/Turkish-OSCAR-GEC-v0
+    revision: 3467f87373a53ec0c1b486546e2ae9338f55891a   # sabit sürüm (2024-04-28); 2,3 GB
+    num_beams: 1                    # yayımlanmadı; bu ayarla tweetlerde 78,5 çıktı (yayımlanan 79,0), Kapı A 2026-11-23
+    max_new_tokens: 256             # yayımlanmadı; model zaten çoğunlukla 48 tokenda kendisi bitiriyor (rapor 02)
+
 training:
-  max_len: null                     # görev 03: token uzunluğu ölçülüp %95'lik dilime göre konur
+  max_len: null                    # Kapı B: seçilen modelde ölçülüp %95'lik dilime göre konur (K11)
+  max_len_ceiling: 512              # K11 (2026-11-23 notu): pilotta bütün adaylar için tavan; aşan örnek elenir
   lora_r: 16
   lora_alpha: 32
   lora_dropout: 0.05
   learning_rate: 0.0002
   epochs: 1
+  batch_size: 16                    # pilotta T4 belleğiyle sınanır; sığmazsa küçültülür ve grad_accum artırılır (etkin grup 16 kalır)
+  grad_accum: 1
+  warmup_ratio: 0.03                # ilk %3 adımda öğrenme oranı sıfırdan yükselir
+  weight_decay: 0.0
+  max_grad_norm: 1.0                # gradyan kırpma; fp16'da taşmaya karşı
+  lora_target_modules: all-linear   # çıkış katmanı dışındaki bütün doğrusal katmanlar (GPT-2'nin Conv1D katmanları dahil)
+  gradient_checkpointing: false     # bellek yetmezse açılır; eğitimi yavaşlatır
+  logging_steps: 20
+  save_steps: 200                   # Kaggle oturumu koparsa --resume ile buradan devam edilir
+  smoke_model: ufakai/ufakzeka-1    # yerel duman testinde kullanılan en küçük aday (0,18B; 365 MB)
   load_in_4bit: true
   fp16: true                        # T4 bf16 desteklemez; pilotta NaN kayıp izlenir
+
+inference:
+  max_new_tokens: 256               # açgözlü kod çözme; cevap ortalama 35–50, %95'lik dilimde 80–115 token (rapor 03, bölüm 11)
+  batch_size: 16
 
 guard:
   max_change_ratio: null            # yalnızca doğrulama setinde ayarlanır
@@ -48,6 +82,11 @@ eval:
   beta: 0.5
   n_boot: 1000
   m2_timeout_seconds: 60            # M2 scorer çok değişmiş cümlelerde yavaşlayabilir
+  errant_tr_dir: external/erranttr  # github.com/harunuz/erranttr @ 56cf0a3; depoya girmez (docs/KURULUM.md)
+  errant_tr_mode: cs                # ana skor (K15, 2026-11-24 notu); 'cse' de hesaplanır ve yanında raporlanır
+  tweets:                           # Ersoy ve Yıldız'ın iki dönüşümü; ayrıntılar Kapı A'da 79,0 ile sabitlenecek
+    capitalize: turkish             # altın cümlenin ilk harfi: turkish (i -> İ), ascii (i -> I), python_capitalize, none
+    keep_punct: "'’#"               # model çıktısından silinmeyen noktalama (altın cümlelerde yalnızca bunlar var)
   scorers:                          # K15 (2026-11-13 notu): her sette yayımlanmış skorun aracı
     movie_reviews: [m2scorer, errant_tr]   # 84,2 M2 scorer ile, 28,1 ERRANT-TR ile kıyaslanır
     oscar_test: [errant_tr]

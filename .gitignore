@@ -6,6 +6,9 @@ outputs/*
 !data/processed/.gitkeep
 !outputs/.gitkeep
 
+# Üçüncü taraf araçlar (ERRANT-TR); kurulum docs/KURULUM.md içinde
+external/
+
 # Gizli bilgiler
 .env
 kaggle.json

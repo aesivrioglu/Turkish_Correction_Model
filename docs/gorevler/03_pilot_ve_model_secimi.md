@@ -67,7 +67,7 @@ Aynı anda B planı ölçütleri (K21) kontrol edilir. Biri geçerliyse eğitime
 
 ## Bitti sayılma ölçütleri
 
-- [ ] Duman testi yerelde geçiyor
+- [x] Duman testi yerelde geçiyor (2026-11-24)
 - [ ] İki mini eğitim tamamlandı, pilot raporu yazıldı
 - [ ] Kapı B kararları yapılandırmaya ve `docs/GUNLUK.md` dosyasına işlendi
 - [ ] `requirements-kaggle.txt` çalışan sürümlerle sabitlendi

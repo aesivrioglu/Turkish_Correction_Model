@@ -1,0 +1,7 @@
+# Pilot mini eğitim (görev 03, adım 6): her kaynaktan 1.000 örnek. Model --model ile verilir.
+inherits: base.yaml
+run_name: pilot
+mix:
+  gecturk: true
+  oscar: true
+  limit_per_source: 1000
