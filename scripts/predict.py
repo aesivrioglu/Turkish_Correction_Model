@@ -31,7 +31,7 @@ from typing import Any
 
 from trgec.config import load_config
 from trgec.convert import read_jsonl, write_jsonl
-from trgec.examples import inference_messages, render, stop_text
+from trgec.examples import inference_messages, render, stop_text, use_plain_prompt
 from trgec.formats import MODE_LABEL, parse_output
 from trgec.guard import apply_guard
 from trgec.modeling import restore_tied_output_layer
@@ -43,7 +43,7 @@ def base_model_of(adapter_dir: Path) -> str:
     return json.loads((adapter_dir / "adapter_config.json").read_text(encoding="utf-8"))["base_model_name_or_path"]
 
 
-def load_model(model_id: str, adapter_dir: Path | None, device: str, load_in_4bit: bool):
+def load_model(model_id: str, adapter_dir: Path | None, device: str, load_in_4bit: bool, plain_prompt_models: list[str] | None = None):
     """Temel modeli yükler, varsa adaptörü üstüne takar.
 
     GPU'da model eğitimdeki gibi 4-bit yüklenir; CPU'da (yerel deneme) fp32.
@@ -53,6 +53,7 @@ def load_model(model_id: str, adapter_dir: Path | None, device: str, load_in_4bi
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(str(adapter_dir) if adapter_dir else model_id)
+    use_plain_prompt(tokenizer, model_id, plain_prompt_models)  # eğitimdeki istemle aynı olsun
     if device == "cuda":
         from transformers import BitsAndBytesConfig
 
@@ -184,7 +185,7 @@ def main() -> None:
     run_name = args.run_name or (adapter_dir.name if adapter_dir else f"zeroshot__{model_id.split('/')[-1]}")
     print(f"{name}: {len(records)} cümle | {model_id} | adaptör: {adapter_dir} | {device} | {settings}")
 
-    tokenizer, model = load_model(model_id, adapter_dir, device, config["training"]["load_in_4bit"])
+    tokenizer, model = load_model(model_id, adapter_dir, device, config["training"]["load_in_4bit"], config["model"].get("plain_prompt"))
     start = time.time()
     rows = predict(records, tokenizer, model, device, settings)
     seconds = time.time() - start

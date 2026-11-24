@@ -98,6 +98,26 @@ def render(tokenizer: Any, messages: Sequence[dict[str, str]]) -> Rendered:
     return Rendered(prompt, rendered_answer, add_special_tokens=False)
 
 
+def use_plain_prompt(tokenizer: Any, model_id: str, plain_prompt_models: Sequence[str] | None) -> bool:
+    """Listedeki modellerde sohbet şablonunu devre dışı bırakır; render yedek şablona düşer.
+
+    Neden: bazı "base" modellerin tokenizer'ında sohbet şablonu vardır ama model o
+    şablonun özel tokenlarını hiç görmemiştir. Mecellem-Qwen3-1.7B-TR'de
+    '<|im_start|>' ve '<|im_end|>' gömme satırları birebir aynıdır (kosinüs 1,0)
+    ve eğitilmemiş başka tokenlarla neredeyse aynıdır. LoRA gömme tablosunu
+    eğitmediği için model '<|im_end|>' üretemez: pilotta cevabı doğru yazdı ama
+    hiç duramadı. '<|endoftext|>' (EOS) ise ön eğitimde görülmüş sağlam bir
+    tokendır. Şablon kapatılınca istem düz metin olur ve cevap EOS ile biter.
+
+    Tokenizer adaptörle birlikte kaydedildiği için çıkarım da aynı düz istemi kullanır.
+    Döndürür: şablon kapatıldı mı?
+    """
+    if model_id not in (plain_prompt_models or ()):
+        return False
+    tokenizer.chat_template = None
+    return True
+
+
 _PROBE = [{"role": "user", "content": "x"}, {"role": "assistant", "content": "y"}]
 
 

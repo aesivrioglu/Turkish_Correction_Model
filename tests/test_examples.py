@@ -171,3 +171,16 @@ def test_pad_batch_pads_right_and_ignores_padding_in_loss():
     assert batch["input_ids"] == [[5, 6, 7], [5, 0, 0]]
     assert batch["attention_mask"] == [[1, 1, 1], [1, 0, 0]]
     assert batch["labels"] == [[-100, 6, 7], [5, -100, -100]]
+
+
+def test_use_plain_prompt_switches_listed_models_to_fallback_and_eos():
+    listed, other = TemplateTokenizer(), TemplateTokenizer()
+    assert examples.use_plain_prompt(listed, "org/base-model", ["org/base-model"]) is True
+    assert examples.use_plain_prompt(other, "org/chat-model", ["org/base-model"]) is False
+    assert examples.use_plain_prompt(other, "org/chat-model", None) is False
+    # Listedeki model: düz istem, cevap şablonun işaretiyle değil EOS ile biter.
+    rendered = examples.render(listed, examples.training_messages(OSCAR_RECORD))
+    assert rendered.prompt.startswith("Kullanıcı: ") and rendered.answer == "Bugün hava çok güzel<eos>"
+    assert examples.stop_text(listed) == "<eos>"
+    # Listede olmayan model şablonunu korur.
+    assert examples.stop_text(other) == "<end>"

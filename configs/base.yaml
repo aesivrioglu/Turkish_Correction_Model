@@ -43,6 +43,8 @@ model:
     - Qwen/Qwen3-0.6B               # 0,75B
     - ytu-ce-cosmos/turkish-gpt2-large-750m-instruct-v0.1   # 0,77B; bağlam 1.024 token
     - ufakai/ufakzeka-1             # 0,18B
+  plain_prompt:                     # sohbet şablonu kullanılmayan adaylar: düz istem, cevap EOS ile biter
+    - newmindai/Mecellem-Qwen3-1.7B-TR   # şablonun özel tokenları eğitilmemiş (rapor 03_pilot, bölüm 3.1)
   chosen: null                      # Kapı B'de doldurulur, sonra değişmez
 
 baselines:

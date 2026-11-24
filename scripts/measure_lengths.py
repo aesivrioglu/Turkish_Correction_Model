@@ -24,7 +24,7 @@ from typing import Any
 
 from trgec.config import load_config
 from trgec.convert import read_jsonl
-from trgec.examples import mix_records, render, stop_text, training_messages
+from trgec.examples import mix_records, render, stop_text, training_messages, use_plain_prompt
 from trgec.lengths import suggest_max_len, truncation_rate
 
 
@@ -54,11 +54,12 @@ def describe(lengths: list[int], ceiling: int) -> dict[str, Any]:
     }
 
 
-def measure(model_id: str, records: list[dict], ceiling: int) -> dict[str, Any]:
+def measure(model_id: str, records: list[dict], ceiling: int, plain_prompt_models: list[str] | None = None) -> dict[str, Any]:
     """Bir adayın tokenizer'ıyla bütün eğitim örneklerini ölçer."""
     from transformers import AutoTokenizer  # yalnızca burada gerekir
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
+    use_plain_prompt(tokenizer, model_id, plain_prompt_models)
     rendered = [render(tokenizer, training_messages(record)) for record in records]
     special = rendered[0].add_special_tokens
     lengths = [len(ids) for ids in tokenizer([r.prompt + r.answer for r in rendered], add_special_tokens=special)["input_ids"]]
@@ -100,7 +101,7 @@ def main() -> None:
 
     results = []
     for model_id in models:
-        result = measure(model_id, records, ceiling)
+        result = measure(model_id, records, ceiling, config["model"].get("plain_prompt"))
         results.append(result)
         stats = result["all"]
         print(

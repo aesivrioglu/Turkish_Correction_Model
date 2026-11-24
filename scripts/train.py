@@ -36,7 +36,7 @@ from typing import Any
 
 from trgec.config import adapter_run_name, load_config
 from trgec.convert import read_jsonl, write_jsonl
-from trgec.examples import IGNORE_INDEX, drop_over_length, encode, mix_records, pad_batch, render, stop_text, training_messages
+from trgec.examples import IGNORE_INDEX, drop_over_length, encode, mix_records, pad_batch, render, stop_text, training_messages, use_plain_prompt
 from trgec.modeling import restore_tied_output_layer
 
 SMOKE_EXAMPLES = 8
@@ -189,6 +189,8 @@ def main() -> None:
 
     # 1-2. Veri
     tokenizer = AutoTokenizer.from_pretrained(model_id)
+    if use_plain_prompt(tokenizer, model_id, config["model"].get("plain_prompt")):
+        print("  sohbet şablonu kapatıldı: düz istem, cevap EOS ile biter (model.plain_prompt)", flush=True)
     records = load_training_records(config)
     if smoke:
         records = records[:SMOKE_EXAMPLES]
