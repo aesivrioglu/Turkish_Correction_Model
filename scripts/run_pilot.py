@@ -34,13 +34,19 @@ import zipfile
 from pathlib import Path
 
 from trgec.config import adapter_run_name, load_config
+from trgec.pilot import halve_batch, is_out_of_memory
 
 SMOKE_PREDICT_LIMIT = 4
 
 
-def run_step(command: list[str], log_path: Path, env: dict[str, str]) -> tuple[bool, float]:
-    """Bir betiği ayrı süreçte çalıştırır; çıktısını hem ekrana hem günlük dosyasına yazar."""
+def run_step(command: list[str], log_path: Path, env: dict[str, str]) -> tuple[bool, float, str]:
+    """Bir betiği ayrı süreçte çalıştırır; çıktısını hem ekrana hem günlük dosyasına yazar.
+
+    Döndürür: (başarılı mı, süre, çıktının son bölümü). Son bölüm, hatanın bellek
+    taşması olup olmadığını anlamak için kullanılır.
+    """
     start = time.time()
+    tail: list[str] = []
     with log_path.open("a", encoding="utf-8", newline="\n") as log:
         log.write(f"\n$ {' '.join(command)}\n")
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, text=True, encoding="utf-8", errors="replace")
@@ -49,8 +55,36 @@ def run_step(command: list[str], log_path: Path, env: dict[str, str]) -> tuple[b
             sys.stdout.write(line)
             sys.stdout.flush()
             log.write(line)
+            tail.append(line)
+            del tail[:-200]
         code = process.wait()
-    return code == 0, round(time.time() - start, 1)
+    return code == 0, round(time.time() - start, 1), "".join(tail)
+
+
+def train_with_fallback(base_command: list[str], batch_size: int, grad_accum: int, log_path: Path, env: dict[str, str]) -> dict:
+    """Eğitimi çalıştırır; GPU belleği taşarsa grup boyutunu yarıya indirip yeniden dener.
+
+    Uzunluğa göre gruplama en uzun grubu başa koyar, yani bellek yetmeyecekse
+    eğitim ilk adımda durur; her deneme yalnızca bir dakika kadar sürer. Etkin
+    grup boyutu (grup x biriktirme) hiç değişmez. Bellek dışı bir hata yeniden denenmez.
+    """
+    result: dict = {"train_ok": False, "train_seconds": 0.0, "attempts": []}
+    setting: tuple[int, int] | None = (batch_size, grad_accum)
+    while setting is not None:
+        batch, accum = setting
+        ok, seconds, tail = run_step(base_command + ["--batch-size", str(batch), "--grad-accum", str(accum)], log_path, env)
+        out_of_memory = not ok and is_out_of_memory(tail)
+        result["attempts"].append({"batch_size": batch, "grad_accum": accum, "ok": ok, "seconds": seconds, "out_of_memory": out_of_memory})
+        result["train_seconds"] = round(result["train_seconds"] + seconds, 1)
+        if ok:
+            result.update(train_ok=True, batch_size=batch, grad_accum=accum)
+            return result
+        if not out_of_memory:
+            return result
+        setting = halve_batch(batch, accum)
+        if setting:
+            print(f"  GPU belleği yetmedi (grup {batch}); grup {setting[0]} x biriktirme {setting[1]} ile yeniden deneniyor", flush=True)
+    return result
 
 
 def clean_model_cache(model_id: str) -> None:
@@ -98,6 +132,7 @@ def main() -> None:
     # Kaggle iki T4 verir. Tek GPU görünür kılınır: 4-bit yüklenen model iki karta
     # otomatik bölünürse (DataParallel) eğitim bozulur.
     env.setdefault("CUDA_VISIBLE_DEVICES", "0")
+    env.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")  # bellek parçalanmasını azaltır
 
     summary: list[dict] = []
     for number, model_id in enumerate(models, start=1):
@@ -110,7 +145,7 @@ def main() -> None:
         train = [sys.executable, "scripts/train.py", "--config", args.config, "--model", model_id]
         if args.smoke_test:
             train.append("--smoke-test")
-        entry["train_ok"], entry["train_seconds"] = run_step(train, log_path, env)
+        entry.update(train_with_fallback(train, config["training"]["batch_size"], config["training"]["grad_accum"], log_path, env))
 
         if entry["train_ok"]:
             meta = json.loads((adapter_dir / "run_meta.json").read_text(encoding="utf-8"))
@@ -121,7 +156,7 @@ def main() -> None:
                 command = [sys.executable, "scripts/predict.py", "--config", args.config, "--testset", name, "--adapter", str(adapter_dir)]
                 if args.smoke_test:
                     command += ["--limit", str(SMOKE_PREDICT_LIMIT)]
-                ok, seconds = run_step(command, log_path, env)
+                ok, seconds, _tail = run_step(command, log_path, env)
                 entry["predict"][name] = {"ok": ok, "seconds": seconds}
         else:
             print(f"  EĞİTİM BAŞARISIZ: {model_id}. Günlük: {log_path}", flush=True)
@@ -137,7 +172,8 @@ def main() -> None:
         predicted = sum(1 for result in entry["predict"].values() if result["ok"])
         print(
             f"{entry['model']}: eğitim {'tamam' if entry['train_ok'] else 'BAŞARISIZ'} ({entry['train_seconds']} sn) | "
-            f"tahmin {predicted}/{len(eval_sets)} set | sn/adım {entry.get('seconds_per_step')} | tepe bellek {entry.get('peak_gpu_memory_gb')} GB"
+            f"tahmin {predicted}/{len(eval_sets)} set | grup {entry.get('batch_size')} x {entry.get('grad_accum')} | "
+            f"sn/adım {entry.get('seconds_per_step')} | tepe bellek {entry.get('peak_gpu_memory_gb')} GB"
         )
     print(f"\nindirilecek dosya: {archive}")
     if not all(entry["train_ok"] for entry in summary):

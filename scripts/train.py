@@ -161,6 +161,8 @@ def main() -> None:
     parser.add_argument("--model", help="Hugging Face kimliği (varsayılan: model.chosen; duman testinde training.smoke_model)")
     parser.add_argument("--smoke-test", action="store_true")
     parser.add_argument("--smoke-steps", type=int, default=SMOKE_STEPS, help="duman testinde adım sayısı; 30 verilirse kaybın düştüğü görülür")
+    parser.add_argument("--batch-size", type=int, help="grup boyutu (varsayılan: training.batch_size)")
+    parser.add_argument("--grad-accum", type=int, help="gradyan biriktirme adımı (varsayılan: training.grad_accum)")
     parser.add_argument("--resume", action="store_true", help="çıktı klasöründeki son kayıt noktasından devam et")
     parser.add_argument("--push-to-hub", metavar="DEPO", help="bitince adaptörü bu özel Hugging Face deposuna yükle (HF_TOKEN gerekir)")
     args = parser.parse_args()
@@ -202,11 +204,13 @@ def main() -> None:
     print(f"  parametre: {total:,} toplam, {trainable:,} öğrenen (%{100 * trainable / total:.2f})")
 
     # 4. Eğitim
-    batch_size = SMOKE_BATCH if smoke else training["batch_size"]
+    batch_size = SMOKE_BATCH if smoke else (args.batch_size or training["batch_size"])
+    grad_accum = 1 if smoke else (args.grad_accum or training["grad_accum"])
+    print(f"  grup boyutu {batch_size} x biriktirme {grad_accum} = etkin {batch_size * grad_accum}")
     arguments = TrainingArguments(
         output_dir=str(out_dir),
         per_device_train_batch_size=batch_size,
-        gradient_accumulation_steps=1 if smoke else training["grad_accum"],
+        gradient_accumulation_steps=grad_accum,
         learning_rate=training["learning_rate"],
         num_train_epochs=training["epochs"],
         max_steps=args.smoke_steps if smoke else -1,

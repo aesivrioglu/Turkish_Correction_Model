@@ -60,7 +60,7 @@ training:
   lora_dropout: 0.05
   learning_rate: 0.0002
   epochs: 1
-  batch_size: 16                    # pilotta T4 belleğiyle sınanır; sığmazsa küçültülür ve grad_accum artırılır (etkin grup 16 kalır)
+  batch_size: 16                    # başlangıç değeri; T4'e sığmazsa run_pilot.py yarıya indirir ve grad_accum'u ikiye katlar (etkin grup 16 kalır)
   grad_accum: 1
   warmup_ratio: 0.03                # ilk %3 adımda öğrenme oranı sıfırdan yükselir
   weight_decay: 0.0
