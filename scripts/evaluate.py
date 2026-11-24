@@ -37,6 +37,7 @@ TESTSETS = {
     "tweets": {"file": "tweets.jsonl", "official_m2": None},
     "movie_reviews": {"file": "movie_reviews.jsonl", "official_m2": None},
     "oscar_dev": {"file": "oscar_dev.jsonl", "official_m2": None},
+    "gecturk_dev_2k": {"file": "gecturk_dev_2k.jsonl", "official_m2": None},
     "oscar_dev_clean": {"file": "oscar_dev_clean.jsonl", "official_m2": None},
 }
 NOT_READY = ("gecturk_dev",)

@@ -12,6 +12,7 @@ Hepsi `data/processed/` altında; depoya girmez. Tek komut: `python scripts/prep
 | `oscar_test.jsonl` | 2.408 | 26 (%1,1) | Test 2 (kilitli) |
 | `tweets.jsonl` | 2.000 | 89 (%4,5) | Test 3 (kilitli) |
 | `gecturk_dev.jsonl` | 20.768 | 10.506 (%50,6) | Doğrulama: model ve eşik seçimi (sentetik) |
+| `gecturk_dev_2k.jsonl` | 2.000 | 1.000 (%50) | Pilot ve keşif fazında kullanılan sabit GECTurk doğrulama alt kümesi (katmanlı, tohum 42, kural başına en az 20; `gecturk_dev` içinden) |
 | `oscar_dev.jsonl` | 500 | 0 | Doğrulama: model ve eşik seçimi |
 | `oscar_dev_clean.jsonl` | 250 | 250 (hepsi) | Doğrulama: organik metinde aşırı düzeltme (K27) |
 | `gecturk_train_12k.jsonl` | 12.000 | 6.000 (%50) | D1'in tamamı, D2'nin sentetik yarısı |

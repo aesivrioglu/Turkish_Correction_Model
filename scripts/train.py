@@ -34,7 +34,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from trgec.config import load_config
+from trgec.config import adapter_run_name, load_config
 from trgec.convert import read_jsonl, write_jsonl
 from trgec.examples import IGNORE_INDEX, drop_over_length, encode, mix_records, pad_batch, render, stop_text, training_messages
 
@@ -177,7 +177,7 @@ def main() -> None:
     if not smoke and not torch.cuda.is_available():
         raise SystemExit("GPU yok. Yerelde yalnızca --smoke-test çalıştırılır; gerçek eğitim Kaggle'da (CLAUDE.md).")
     max_len = training["max_len"] or training["max_len_ceiling"]
-    run_name = f"{'smoke' if smoke else config['run_name']}__{model_id.split('/')[-1]}"
+    run_name = adapter_run_name(config["run_name"], model_id, smoke)
     out_dir = Path(config["paths"]["outputs"]) / "adapters" / run_name
     torch.manual_seed(config["seed"])
 

@@ -25,19 +25,20 @@ Kod yerelde Claude Code ile yazılır ve test edilir. Kaggle yalnızca GPU gerek
 1. Yerelde kodu yaz ya da değiştir. `pytest -q` geçsin.
 2. Eğitim kodu değiştiyse `python scripts/train.py --config ... --smoke-test` yerelde geçsin.
 3. Commit at, GitHub'a gönder.
-4. Kaggle'da `kaggle/calistirici.ipynb` not defterinde `CONFIG` değerini ayarla, "Save Version" ile toplu çalıştır.
-5. Betik bitince adaptörü ve tahmin dosyalarını Hugging Face Hub'daki özel depoya yükler.
-6. Yerelde tahminleri indir, `python scripts/evaluate.py ...` ile değerlendir.
+4. Kaggle'da `kaggle/calistirici.ipynb` not defterinde `CONFIG` ve `MODELS` değerlerini ayarla, "Save Version" ile toplu çalıştır.
+5. Betik bitince tahminleri, özetleri ve günlükleri tek bir zip'e koyar (pilotta `pilot_outputs.zip`; not defterinin Output bölümünden indirilir). Ana eğitimlerde adaptör ayrıca Hugging Face Hub'daki özel depoya yüklenir (`train.py --push-to-hub`).
+6. Zip'i yerelde `outputs/kaggle/` altına aç, `python scripts/evaluate.py ...` ile değerlendir.
 7. Sonucu ve gözlemleri `docs/GUNLUK.md` dosyasına yaz.
 
 ## Kaggle kurulumu (bir kez)
 
 1. Kaggle hesabını telefonla doğrula. İnternet erişimi ve GPU için gereklidir.
 2. Hugging Face'te yazma yetkili bir erişim anahtarı oluştur.
-3. Kaggle not defterinde Add-ons > Secrets altına `HF_TOKEN` ekle. Depo özelse `GITHUB_TOKEN` da ekle.
+3. Kaggle not defterinde Add-ons > Secrets altına `HF_TOKEN` ekle (pilotta şart değil; adaptör Hub'a yüklenecekse gerekir). Depo herkese açık olduğu için `GITHUB_TOKEN` gerekmez.
 4. `kaggle/calistirici.ipynb` dosyasını Kaggle'a yükle (File > Import Notebook).
 5. Sağ panelde Accelerator = GPU T4 x2, Internet = On yap.
 6. Not defterindeki `GITHUB_USER` (`aesivrioglu`) ve `REPO` (`Turkish_Correction_Model`) değerlerinin GitHub'daki depoyla aynı olduğunu kontrol et.
+7. **Veri seti (2026-11-24):** `data/processed` depoya girmediği için eğitim ve doğrulama dosyaları özel bir Kaggle veri seti olarak yüklenir. `outputs/kaggle_dataset/trgec-pilot-veri.zip` (2,4 MB) dosyasını kaggle.com > Datasets > New Dataset ile yükle, görünürlüğü **Private** bırak, adını `trgec-pilot-veri` koy. Sonra not defterinde Input > Add Input ile ekle. Pakette yalnızca eğitim ve doğrulama dosyaları var (`gecturk_train_12k`, `oscar_train_12k`, `gecturk_dev_2k`, `oscar_dev`, `oscar_dev_clean`); test setleri bilerek konmadı.
 
 ## Duman testi nedir?
 

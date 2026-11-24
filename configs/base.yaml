@@ -24,6 +24,8 @@ sampling:
   oscar_n: 12000                    # yalnızca D2
   clean_ratio: 0.5
   min_per_rule: 50
+  gecturk_dev_n: 2000               # pilot ve keşif fazında kullanılan GECTurk doğrulama alt kümesi (tamamı 20.768 cümle; her adayda çıkarım çok uzun sürer)
+  gecturk_dev_min_per_rule: 20
   oscar_dev_size: 500               # eşik ve model seçimi için; test setlerine dokunulmaz
   oscar_max_words: 70               # K11 (2026-11-23 notu): kaynak cümle en fazla 70 kelime
   oscar_reserve: 1500               # yineleme ve sızıntı elemesinden sonra sayı eksilmesin diye yedek

@@ -60,4 +60,4 @@ tests/         pytest testleri
 
 ## Durum
 
-Güncel durum ve sıradaki adım için `docs/GUNLUK.md` dosyasının en üstündeki kayda bak. Görev 01'de yalnızca kullanıcının elle kontrolü kaldı; Kapı A geçildi (2026-11-23). Sıradaki iş görev 03'ün yerel kısmı (`docs/gorevler/03_pilot_ve_model_secimi.md`).
+Güncel durum ve sıradaki adım için `docs/GUNLUK.md` dosyasının en üstündeki kayda bak. Görev 01'de yalnızca kullanıcının elle kontrolü kaldı; Kapı A geçildi (2026-11-23). Görev 03'ün yerel kısmı bitti (eğitim ve çıkarım betikleri, duman testi); sıradaki iş Kaggle'da deneme koşusu ve sekiz adayın pilotu (`docs/gorevler/03_pilot_ve_model_secimi.md`, adım 6).

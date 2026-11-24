@@ -5,3 +5,5 @@ mix:
   gecturk: true
   oscar: true
   limit_per_source: 1000
+pilot:
+  eval_sets: [gecturk_dev_2k, oscar_dev, oscar_dev_clean]   # yalnızca doğrulama setleri; test setlerine dokunulmaz

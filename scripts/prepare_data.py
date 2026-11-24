@@ -63,6 +63,7 @@ LEAKAGE_PAIRS = {
     "oscar_dev": ("movie_reviews", "oscar_test", "tweets"),
     "oscar_dev_clean": ("movie_reviews", "oscar_test", "tweets"),
     "gecturk_dev": ("movie_reviews", "oscar_test", "tweets"),
+    "gecturk_dev_2k": ("gecturk_train_12k", "movie_reviews", "oscar_test", "tweets"),
 }
 OSCAR_TRAIN_FILE = "train.csv"
 
@@ -309,6 +310,16 @@ def sample_gecturk(config: dict) -> None:
     print("kural: train / havuz / alt küme")
     for rule, row in stats["rules"].items():
         print(f"  {rule:8s} {row['train']:6d} {row['pool']:6d} {row['subset']:6d}")
+
+    # Doğrulama alt kümesi: GECTurk dev'in tamamı (20.768 cümle) her adayda çıkarım için çok
+    # uzundur. Aynı katmanlı yöntemle sabit bir alt küme seçilir; bütün adaylar aynı cümlelerle ölçülür.
+    dev = read_jsonl(processed / "gecturk_dev.jsonl")
+    dev_subset = stratified_sample(dev, cfg["gecturk_dev_n"], cfg["clean_ratio"], cfg["gecturk_dev_min_per_rule"], seed=seed)
+    name = f"gecturk_dev_{cfg['gecturk_dev_n'] // 1000}k"
+    out = _write_subset(config, name, dev_subset)
+    _summary(name, dev_subset, out)
+    dev_rules = rule_counts(dev_subset)
+    print("  kural başına cümle:", ", ".join(f"{rule.split('_')[1]}:{dev_rules[rule]}" for rule in sorted(dev_rules, key=lambda r: int(r.split("_")[1]))))
 
 
 def leakage(config: dict) -> None:

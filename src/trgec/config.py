@@ -27,3 +27,11 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if parent:
         config = _merge(load_config(path.parent / parent), config)
     return config
+
+
+def adapter_run_name(run_name: str, model_id: str, smoke: bool = False) -> str:
+    """Bir eğitim koşusunun klasör adı: '<çalışma>__<model>' (duman testinde 'smoke__<model>').
+
+    train.py adaptörü bu adla yazar; run_pilot.py ve predict.py aynı adla bulur.
+    """
+    return f"{'smoke' if smoke else run_name}__{model_id.split('/')[-1]}"

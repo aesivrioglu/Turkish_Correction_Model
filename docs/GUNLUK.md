@@ -13,6 +13,29 @@ Kayıt biçimi:
 - Sıradaki adım:
 ```
 
+## 2026-11-24, görev 03 (adım 6 hazırlığı: Kaggle pilotu)
+
+- Yapılan:
+  - Kullanıcı onayıyla `gorev-01-03-veri-kapi-a-egitim` dalı `main`'e birleştirildi (ileri sarma).
+  - `gecturk_dev_2k` üretildi: GECTurk dev'den katmanlı 2.000 cümle (1.000 hatalı + 1.000 hatasız, kural başına en az 20). `prepare_data.py` ve sızıntı taramasına eklendi; `evaluate.py` bu seti ERRANT-TR ile skorluyor.
+  - `scripts/run_pilot.py` yazıldı: adayları sırayla ayrı süreçlerde eğitir, doğrulama setlerinde tahmin üretir, hata veren adayı atlayıp devam eder, sonuçları `pilot_outputs.zip` içine koyar. Tek GPU görünür kılınıyor (`CUDA_VISIBLE_DEVICES=0`).
+  - `kaggle/calistirici.ipynb` pilot için yeniden yazıldı: depo klonu, kurulum, veriyi Kaggle veri setinden kopyalama, `run_pilot.py`, zip. `HF_TOKEN` artık şart değil.
+  - Kaggle'a yüklenecek paket hazırlandı: `outputs/kaggle_dataset/trgec-pilot-veri.zip` (2,4 MB; yalnızca eğitim ve doğrulama dosyaları).
+- Ölçülen:
+  - `run_pilot.py` yerelde duman modunda çalıştı (ufakzeka-1: eğitim 43 sn, üç sette tahmin 3/3).
+  - `gecturk_dev_2k` ile `gecturk_train_12k`, film yorumları, OSCAR testi ve tweetler arasında çakışma 0.
+  - GitHub deposu herkese açık (anonim istek 200 döndü); Kaggle klonu için anahtar gerekmiyor.
+  - Testler: 93 geçti.
+- Karar ya da değişiklik:
+  - Pilotta GECTurk doğrulaması 2.000 cümlelik sabit alt kümeyle yapılır (tamamı 20.768 cümle; sekiz adayda çıkarım çok uzun sürer). `sampling.gecturk_dev_n: 2000`.
+  - Pilot doğrulama skorları ERRANT-TR ile hesaplanır (yayımlanmış bir skorla kıyas yok; K15 test setleri içindir).
+  - Veri Kaggle'a özel Kaggle veri seti olarak taşınır; test setleri pakete konmaz.
+- Sorun ya da açık soru:
+  - 4-bit ve fp16 yolu ilk kez Kaggle'da çalışacak; önce tek adayla (ufakzeka-1) deneme koşusu yapılacak.
+  - Kaggle'daki `bitsandbytes` sürümü sabitlenmedi; deneme koşusunda çalışan sürüm yazılacak.
+  - Kullanıcının elle kontrolü ve M2 scorer hâlâ bekliyor.
+- Sıradaki adım: Veri setini Kaggle'a yükle, not defterini çalıştır (deneme koşusu), `pilot_outputs.zip` dosyasını indir; yerelde skorla. Deneme temizse `MODELS = ""` ile sekiz adayın pilotu.
+
 ## 2026-11-24, görev 03 (adım 4 ve 5: `train.py`, `predict.py`, duman testi)
 
 - Yapılan:

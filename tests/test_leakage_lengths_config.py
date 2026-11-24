@@ -60,3 +60,10 @@ def test_dedupe_records_keeps_first_and_counts():
     unique, dropped = dedupe_records(records)
     assert [r["id"] for r in unique] == [1, 3, 5]
     assert dropped == 2
+
+
+def test_adapter_run_name():
+    from trgec.config import adapter_run_name
+
+    assert adapter_run_name("pilot", "vngrs/Kumru-2B") == "pilot__Kumru-2B"
+    assert adapter_run_name("pilot", "ufakai/ufakzeka-1", smoke=True) == "smoke__ufakzeka-1"
