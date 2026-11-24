@@ -350,6 +350,34 @@ Modelin "cevabım bitti" demek için ürettiği işaret, sohbet şablonunun ceva
 - **Kanarya'nın şablonu yok;** sabit bir yedek şablon kullanılıyor (`Kullanıcı: ...` ve `Asistan:`). Cosmos GPT-2'nin şablonu cevaptan sonra yalnızca satır sonu yazdığı için EOS'u biz ekliyoruz.
 - **Qwen3'te düşünme modu kapalı;** istem boş bir `<think>` bloğuyla bitiyor ve cevap doğrudan başlıyor.
 
+## 12. Kaggle deneme koşusu (2026-11-24)
+
+Sekiz adayın pilotundan önce, en küçük adayla (`ufakai/ufakzeka-1`) tek bir deneme koşusu yapıldı. Amaç skor değil, yerelde sınanamayan yolun (4-bit yükleme, fp16, T4) çalıştığını görmek. Koşu `scripts/run_pilot.py` ile, `configs/pilot.yaml` (1.000 GECTurk + 1.000 OSCAR örneği, 1 tur) kullanılarak yapıldı.
+
+| Ölçüm | Değer |
+| --- | --- |
+| Grup boyutu 16 | İlk adımda bellek taştı (12,6 GB; en uzun grup 475 token) |
+| Grup boyutu 8 x biriktirme 2 | Tamamlandı: 125 adım, 83 sn (0,67 sn/adım), tepe bellek 7,3 GB |
+| Kayıp | 1,53 → 0,41; NaN yok |
+| Çıkarım (2.750 cümle, grup 16) | 954 sn: `gecturk_dev_2k` 3,9 cümle/sn, `oscar_dev` 1,7 cümle/sn |
+| Koşunun tamamı | 19 dakika (kurulum dahil) |
+
+Doğrulama skorları (ERRANT-TR, `cs`). Bunlar 0,18B'lik modelin 125 adımlık eğitimden sonraki halidir; zincirin çalıştığını gösterir, adaylar hakkında bir şey söylemez:
+
+| Set | P | R | F0.5 | Bozuk çıktı | Hatasız cümlede aşırı düzeltme |
+| --- | --- | --- | --- | --- | --- |
+| `gecturk_dev_2k` | 18,0 | 28,6 | 19,5 | %7,5 | %45 |
+| `oscar_dev` | 38,6 | 41,4 | 39,2 | %32,6 | |
+| `oscar_dev_clean` | | | | %27,6 | %93 |
+
+Bu koşudan çıkan üç ders:
+
+- **Grup boyutu modele göre değişmeli.** Bir eğitim adımının belleği kabaca grup boyutu x en uzun örnek x sözlük boyutu ile büyür (model her konumda sözlüğün tamamına puan verir). Sözlüğü 41 bin token olan ufakzeka 16'lık grubu kaldıramadı; Qwen3'ün sözlüğü 152 bin. `run_pilot.py` artık bellek taşarsa grubu yarıya indirip biriktirmeyi ikiye katlıyor (16 → 8 → 4 → 2); etkin grup boyutu 16 kalıyor. Uzunluğa göre gruplama en uzun grubu başa koyduğu için yetmeyen bellek ilk adımda belli oluyor (yaklaşık 40 sn).
+- **Çıkarım eğitimden uzun sürüyor** (954 sn'ye karşı 83 sn). Nedeni bozulan çıktılar: bir cümlede model durmayıp yazmaya devam ederse o gruptaki bütün cümleler 256 token boyunca bekliyor. Çözüm olarak çıktı sınırı cümleye bağlandı: `2 x kaynak token + 64`, en fazla 256 (`trgec.seq2seq.output_budget`). Eğitim ve doğrulama verisindeki 26.500 altın cevabın bu kurala sığmayanı 1–4 tane; onlar zaten 256 sınırına da sığmıyordu.
+- **Model OSCAR tarzı metinde çoğu zaman liste yazmıyor.** `oscar_dev`'deki bozuk çıktıların 149'unda (163'ün) `###` ayracı yok. Eğitimde OSCAR örnekleri "yalnızca düzelt" talimatıyla, yani listesiz cevapla gösteriliyor (K9); model talimata değil metnin tarzına bakıp listesiz cevap veriyor. Düzeltilmiş cümle yine okunabildiği için skor hesaplanıyor, ama "bozuk çıktı oranı" bu yüzden yüksek görünüyor. Büyük adaylarda nasıl olduğuna pilotta bakılacak; yüksek kalırsa K9 (çıkarımda hangi talimat) yeniden değerlendirilmeli.
+
+Kaggle tarafı: veri özel veri seti olarak (`trgec-pilot-veri`), not defteri özel olarak (`trgec-pilot`) kullanıcının hesabında; ikisi de Kaggle komut satırı aracıyla gönderildi. Kaggle ortamı Python 3.13; `requirements-kaggle.txt` içindeki sabit sürümler sorunsuz kuruldu.
+
 ## Kaynaklar
 
 **Doğrulandı (HF API ve model kartı, 2026-11-21):** Bölüm 2 ve 3'teki bütün kimlikler, parametre sayıları, lisanslar ve gated durumu; EuroLLM-1.7B-Instruct ve Phi-4-mini-instruct kartlarında `tr` dil etiketi.

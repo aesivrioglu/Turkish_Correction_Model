@@ -1,6 +1,6 @@
 import pytest
 
-from trgec.seq2seq import clean_output, generation_summary, hit_length_limit, length_sorted_batches
+from trgec.seq2seq import clean_output, generation_summary, hit_length_limit, length_sorted_batches, output_budget
 
 
 def test_length_sorted_batches_covers_every_index_once():
@@ -45,3 +45,10 @@ def test_generation_summary_counts():
     assert summary["input_tokens_max"] == 10 and summary["output_tokens_max"] == 7
     assert summary["input_tokens_mean"] == 5.0
     assert generation_summary([]) == {"n": 0}
+
+
+def test_output_budget_scales_with_sentence_and_respects_hard_limit():
+    assert output_budget(10, hard_limit=256, per_source_token=2.0, margin=64) == 84
+    assert output_budget(40, hard_limit=256, per_source_token=2.0, margin=64) == 144
+    assert output_budget(200, hard_limit=256, per_source_token=2.0, margin=64) == 256  # üst sınır
+    assert output_budget(0, hard_limit=256, per_source_token=2.0, margin=0) == 1

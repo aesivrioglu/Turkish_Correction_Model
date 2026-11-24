@@ -74,7 +74,9 @@ training:
   fp16: true                        # T4 bf16 desteklemez; pilotta NaN kayıp izlenir
 
 inference:
-  max_new_tokens: 256               # açgözlü kod çözme; cevap ortalama 35–50, %95'lik dilimde 80–115 token (rapor 03, bölüm 11)
+  max_new_tokens: 256               # üst sınır; açgözlü kod çözme
+  max_new_tokens_per_source_token: 2.0   # asıl sınır cümleye göre: 2 x kaynak token + 64 (rapor 03, bölüm 12)
+  max_new_tokens_margin: 64
   batch_size: 16
 
 guard:

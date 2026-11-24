@@ -27,6 +27,20 @@ def length_sorted_batches(lengths: Sequence[int], batch_size: int) -> list[list[
     return [order[start : start + batch_size] for start in range(0, len(order), batch_size)]
 
 
+def output_budget(source_tokens: int, hard_limit: int, per_source_token: float, margin: int) -> int:
+    """Bir cümle için üretilecek en fazla token sayısı.
+
+    Doğru cevap, cümlenin kendisi kadar (düzeltilmiş cümle) ve kısa bir düzeltme
+    listesi kadar yer tutar. Sınır cümlenin uzunluğuna bağlanır:
+    per_source_token x kaynak token sayısı + margin, ama hard_limit'i geçemez.
+    Böylece bozulup yazmaya devam eden bir çıktı, kısa bir cümlede 256 token
+    boyunca değil, birkaç on token sonra kesilir; aynı gruptaki diğer cümleler
+    de onu beklemez. Eğitim ve doğrulama verisindeki altın cevapların tamamına
+    yakını bu sınıra sığar (rapor 03, bölüm 12).
+    """
+    return max(1, min(hard_limit, int(per_source_token * source_tokens) + margin))
+
+
 def clean_output(text: str) -> str:
     """Model çıktısını tek satıra indirir: satır sonları ve yinelenen boşluklar tek boşluk olur.
 

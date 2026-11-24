@@ -54,6 +54,14 @@ Eğitim betiğinin 8 örnek ve 2 adımla, 4-bit nicemleme kapalı olarak CPU'da 
 
 `kaggle kernels push` ile not defteri yerelden başlatılabilir, `kaggle kernels output` ile çıktılar geri çekilebilir. Böylece Claude Code GPU'daki hatayı da görebilir. İlk haftalarda şart değildir; eğitim aşamasında zaman kazandırır.
 
+**2026-11-24:** Araç kullanıcının bilgisayarında kurulu ve hesabına bağlı; pilot bu yolla yürütülüyor. Adımlar:
+
+1. Veri seti: `outputs/kaggle_dataset/trgec-pilot-veri/` klasöründen `kaggle datasets create -p . -t` (özel; `-t` JSONL dosyalarının CSV'ye çevrilmesini önler). Klasörün içinden çalıştırılır; Windows'ta göreli yol hata veriyor.
+2. Not defteri: `outputs/kaggle_kernel/` klasöründe `calistirici.ipynb` kopyası ve `kernel-metadata.json` (özel, GPU ve internet açık, veri seti bağlı). `kaggle kernels push -p . --accelerator NvidiaTeslaT4 -t <saniye>` koşuyu başlatır; `-t` süre sınırıdır.
+3. `kaggle kernels status <kullanıcı>/trgec-pilot` ile durum, `kaggle kernels output <kullanıcı>/trgec-pilot -p <klasör>` ile çıktı ve günlük.
+
+`kernel-metadata.json` ve `dataset-metadata.json` Kaggle kullanıcı adını içerdiği için depoya konmadı (`outputs/` altında).
+
 ## İki Claude, iki rol
 
 - **Claude sohbet projesi:** Plan, kararlar, sonuçların yorumu, rapor taslağı. Kodu görmez.

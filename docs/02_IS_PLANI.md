@@ -61,7 +61,7 @@ Görev dosyası: `gorevler/03_pilot_ve_model_secimi.md`
 - [ ] Boyut merdiveninin iki küçük basamağını ve keşif fazının teknik listesini belirle (K25)
 - [ ] Tepe GPU belleğini 512 token tavanıyla ölç (`raporlar/03_model_adaylari.md`, bölüm 10)
 - [ ] Adım başına hızı ölç, D1 ve D2 için süre tahmini çıkar
-- [ ] fp16'da NaN kayıp olup olmadığını izle
+- [ ] fp16'da NaN kayıp olup olmadığını izle (2026-11-24: deneme koşusunda ufakzeka-1'de NaN yok; diğer adaylar pilotta)
 
 **Kapı B:** Ana model, veri boyutu, `max_len`, değerlendirme protokolü ve keşif fazının teknik listesi seçildi; bundan sonra değişmez (K20 notu). B planı ölçütleri (K21) burada kontrol edilir.
 

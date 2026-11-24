@@ -13,6 +13,28 @@ Kayıt biçimi:
 - Sıradaki adım:
 ```
 
+## 2026-11-24, görev 03 (adım 6: Kaggle deneme koşusu)
+
+- Yapılan:
+  - Kullanıcı Kaggle adımlarını mümkünse benim yapmamı istedi. Bilgisayarda Kaggle komut satırı aracı kurulu ve hesaba bağlıydı; yeni bağımlılık eklenmedi.
+  - Özel Kaggle veri seti oluşturuldu (`trgec-pilot-veri`: beş eğitim ve doğrulama dosyası, 11 MB; test setleri konmadı). Not defteri özel olarak gönderildi (`trgec-pilot`).
+  - Deneme koşusu iki kez çalıştı. İlki ilk adımda bellek taşmasıyla durdu (73 sn). `trgec.pilot` ve `run_pilot.py` içine grup boyutunu yarıya indirip yeniden deneyen mekanizma eklendi; ikinci koşu tamamlandı.
+  - Çıkarımda çıktı sınırı cümleye bağlandı (`output_budget`: 2 x kaynak token + 64, en fazla 256).
+  - `raporlar/03_model_adaylari.md` bölüm 12 ve `04_ORTAM_VE_IS_AKISI.md` içine Kaggle adımları yazıldı.
+- Ölçülen (ufakzeka-1, 2.000 örnek, T4; yalnızca zincirin çalıştığını gösterir):
+  - Grup 16: bellek taşması (12,6 GB). Grup 8 x 2: 125 adım, 83 sn, tepe bellek 7,3 GB; kayıp 1,53 → 0,41, NaN yok.
+  - Çıkarım 2.750 cümlede 954 sn (eğitimin 11 katı).
+  - ERRANT-TR (`cs`): `gecturk_dev_2k` F0.5 19,5 (P 18,0 / R 28,6); `oscar_dev` F0.5 39,2 (P 38,6 / R 41,4). Bozuk çıktı %7,5 / %32,6 / %27,6. Hatasız cümlede aşırı düzeltme: GECTurk %45, OSCAR %93.
+  - Koşunun tamamı 19 dakika. Testler: 96 geçti.
+- Karar ya da değişiklik:
+  - Grup boyutu sabit değil: 16'dan başlar, bellek taşarsa yarıya iner; etkin grup 16 kalır.
+  - `inference.max_new_tokens_per_source_token: 2.0`, `inference.max_new_tokens_margin: 64`.
+- Sorun ya da açık soru:
+  - Model OSCAR tarzı metinde çoğu zaman düzeltme listesi yazmıyor (`###` yok); K9'un çıkarım talimatı büyük adaylarda da böyle davranırsa yeniden değerlendirilmeli.
+  - Kaggle'da kurulan `bitsandbytes` sürümü günlükte görünmüyor (sessiz kurulum); pilotta `pip freeze` çıktısı alınacak.
+  - Kullanıcının elle kontrolü ve M2 scorer hâlâ bekliyor.
+- Sıradaki adım: Kullanıcı onayıyla sekiz adayın pilotu (`MODELS = ""`; tahmini 3–4 saat GPU). Sonra `raporlar/03_pilot.md` ve Kapı B.
+
 ## 2026-11-24, görev 03 (adım 6 hazırlığı: Kaggle pilotu)
 
 - Yapılan:

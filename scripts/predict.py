@@ -34,7 +34,7 @@ from trgec.convert import read_jsonl, write_jsonl
 from trgec.examples import inference_messages, render, stop_text
 from trgec.formats import MODE_LABEL, parse_output
 from trgec.guard import apply_guard
-from trgec.seq2seq import clean_output, length_sorted_batches
+from trgec.seq2seq import clean_output, length_sorted_batches, output_budget
 
 
 def base_model_of(adapter_dir: Path) -> str:
@@ -76,6 +76,7 @@ def predict(records: list[dict], tokenizer, model, device: str, settings: dict[s
     prompts = [render(tokenizer, inference_messages(record["source"], MODE_LABEL)) for record in records]
     special = prompts[0].add_special_tokens
     token_counts = [len(ids) for ids in tokenizer([p.prompt for p in prompts], add_special_tokens=special)["input_ids"]]
+    source_tokens = [len(ids) for ids in tokenizer([record["source"] for record in records], add_special_tokens=False)["input_ids"]]
 
     # Üretim, cevabın bittiğini gösteren işarette durur. Bu işaret her zaman tokenizer'ın
     # EOS'u değildir (rapor 03, bölüm 11); ikisi de durdurucu olarak verilir.
@@ -93,10 +94,17 @@ def predict(records: list[dict], tokenizer, model, device: str, settings: dict[s
     start, done = time.time(), 0
     for batch in length_sorted_batches(token_counts, settings["batch_size"]):
         encoded = tokenizer([prompts[i].prompt for i in batch], add_special_tokens=special, return_tensors="pt", padding=True).to(device)
+        # Çıktı sınırı gruptaki en uzun cümleye göre belirlenir (trgec.seq2seq.output_budget).
+        budget = output_budget(
+            max(source_tokens[i] for i in batch),
+            settings["max_new_tokens"],
+            settings["max_new_tokens_per_source_token"],
+            settings["max_new_tokens_margin"],
+        )
         with torch.inference_mode():
             generated = model.generate(
                 **encoded,
-                max_new_tokens=settings["max_new_tokens"],
+                max_new_tokens=budget,
                 do_sample=False,  # açgözlü kod çözme: aynı girdi hep aynı çıktıyı verir
                 num_beams=1,
                 eos_token_id=sorted(stop_tokens),
@@ -156,6 +164,8 @@ def main() -> None:
     device = ("cuda" if torch.cuda.is_available() else "cpu") if args.device == "auto" else args.device
     settings = {
         "max_new_tokens": args.max_new_tokens or config["inference"]["max_new_tokens"],
+        "max_new_tokens_per_source_token": config["inference"]["max_new_tokens_per_source_token"],
+        "max_new_tokens_margin": config["inference"]["max_new_tokens_margin"],
         "batch_size": args.batch_size or config["inference"]["batch_size"],
         "max_change_ratio": config["guard"]["max_change_ratio"],
     }
