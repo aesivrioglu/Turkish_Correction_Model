@@ -34,6 +34,7 @@ from trgec.convert import read_jsonl, write_jsonl
 from trgec.examples import inference_messages, render, stop_text
 from trgec.formats import MODE_LABEL, parse_output
 from trgec.guard import apply_guard
+from trgec.modeling import restore_tied_output_layer
 from trgec.seq2seq import clean_output, length_sorted_batches, output_budget
 
 
@@ -61,6 +62,8 @@ def load_model(model_id: str, adapter_dir: Path | None, device: str, load_in_4bi
         model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=quantization, dtype=torch.float16, device_map={"": 0})
     else:
         model = AutoModelForCausalLM.from_pretrained(model_id, dtype=torch.float32)
+    # Eğitimdeki onarımın aynısı: çıktı katmanı boş yüklenen modelde (Mecellem) gömme katmanına bağlanır.
+    restore_tied_output_layer(model)
     if adapter_dir:
         from peft import PeftModel
 

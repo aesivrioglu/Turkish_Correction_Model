@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from trgec.config import load_config
+from trgec.pilot import STATUS_NAN, STATUS_NO_LEARNING, STATUS_OK, training_status
 
 
 def percent(value: float | None, digits: int = 1) -> str:
@@ -68,9 +69,17 @@ def collect(config: dict, config_path: str, pilot_dir: Path) -> list[dict[str, A
             "peak_gpu_memory_gb", "loss_first", "loss_last", "parameters_total", "parameters_trainable", "dropped_over_max_len",
         )}
         row["oom_retries"] = sum(1 for attempt in entry.get("attempts", []) if attempt.get("out_of_memory"))
+        # Eğitim yarıda durduysa (NaN) özet dosyasında sayı olmaz; adayın kendi run_meta.json dosyasına bakılır.
+        meta_path = pilot_dir / "adapters" / run / "run_meta.json"
+        run_meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+        row["nan_loss_at_step"] = run_meta.get("nan_loss_at_step")
+        if row["batch_size"] is None and entry.get("attempts"):
+            row["batch_size"], row["grad_accum"] = entry["attempts"][-1]["batch_size"], entry["attempts"][-1]["grad_accum"]
+        row["status"] = training_status(entry["train_ok"], row["loss_first"], row["loss_last"], row["nan_loss_at_step"])
         row["sets"] = {}
         for testset in eval_sets:
-            result = ensure_evaluated(config_path, outputs, run, testset) if entry["train_ok"] else None
+            # Öğrenmemiş bir adayın tahminleri anlamsızdır; skorlanmaz.
+            result = ensure_evaluated(config_path, outputs, run, testset) if row["status"] == STATUS_OK else None
             meta_path = outputs / "predictions" / run / f"{testset}.meta.json"
             meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
             if result is None:
@@ -102,7 +111,11 @@ def render_table(rows: list[dict[str, Any]], eval_sets: list[str]) -> str:
         params = f"{row['parameters_total'] / 1e9:.2f}B".replace(".", ",") if row["parameters_total"] else ""
         group = f"{row['batch_size']} x {row['grad_accum']}" if row["batch_size"] else ""
         loss = f"{number(row['loss_first'])} → {number(row['loss_last'])}" if row["loss_first"] is not None else ""
-        status = "tamam" if row["train_ok"] else "BAŞARISIZ"
+        status = {
+            STATUS_OK: "tamam",
+            STATUS_NAN: f"BAŞARISIZ: kayıp NaN (adım {row['nan_loss_at_step']})",
+            STATUS_NO_LEARNING: "ÖĞRENMEDİ: kayıp düşmedi",
+        }.get(row["status"], "BAŞARISIZ")
         lines.append(
             f"| `{row['model']}` | {params} | {group} | {row['steps'] or ''} | {number(row['seconds_per_step'], 3)} | "
             f"{number(row['train_seconds'], 0)} | {number(row['peak_gpu_memory_gb'])} | {loss} | {status} |"
@@ -114,7 +127,7 @@ def render_table(rows: list[dict[str, Any]], eval_sets: list[str]) -> str:
         for row in ranked:
             scores = row["sets"].get(testset)
             if not scores:
-                lines.append(f"| `{row['model']}` | | | | | | | | |")
+                lines.append(f"| `{row['model']}` | skorlanmadı | | | | | | | |")
                 continue
             has_errors = scores["clean_sentences"] < scores["n"]
             prf = (percent(scores["precision"]), percent(scores["recall"]), percent(scores["f_beta"])) if has_errors else ("", "", "")

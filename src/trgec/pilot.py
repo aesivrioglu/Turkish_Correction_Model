@@ -28,3 +28,27 @@ def halve_batch(batch_size: int, grad_accum: int) -> tuple[int, int] | None:
     if batch_size <= 1:
         return None
     return batch_size // 2, grad_accum * (batch_size // (batch_size // 2))
+
+
+STATUS_OK = "ok"
+STATUS_FAILED = "failed"
+STATUS_NAN = "nan"
+STATUS_NO_LEARNING = "no_learning"
+
+
+def training_status(train_ok: bool, loss_first: float | None, loss_last: float | None, nan_step: int | None = None) -> str:
+    """Bir adayın eğitimi sağlıklı mı? Tahminleri skorlanmaya değer mi?
+
+    Eğitim betiğinin hatasız bitmesi yetmez: kayıp hiç düşmediyse model bir şey
+    öğrenmemiştir ve tahminleri anlamsızdır (pilotta Mecellem: kayıp baştan sona
+    11,93 = ln(sözlük boyutu), yani model her tokena eşit olasılık veriyor).
+    Kayıp NaN olduysa eğitim yarıda durmuştur (pilotta Kanarya, fp16).
+    Yalnızca "ok" dönen adaylar skorlanır.
+    """
+    if nan_step is not None or loss_first != loss_first or loss_last != loss_last:  # NaN kendine eşit değildir
+        return STATUS_NAN
+    if not train_ok or loss_first is None or loss_last is None:
+        return STATUS_FAILED
+    if loss_last >= loss_first:
+        return STATUS_NO_LEARNING
+    return STATUS_OK

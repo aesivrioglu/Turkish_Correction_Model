@@ -37,6 +37,7 @@ from typing import Any
 from trgec.config import adapter_run_name, load_config
 from trgec.convert import read_jsonl, write_jsonl
 from trgec.examples import IGNORE_INDEX, drop_over_length, encode, mix_records, pad_batch, render, stop_text, training_messages
+from trgec.modeling import restore_tied_output_layer
 
 SMOKE_EXAMPLES = 8
 SMOKE_STEPS = 2
@@ -87,6 +88,7 @@ def load_model(model_id: str, training: dict, smoke: bool):
 
     if smoke:
         model = AutoModelForCausalLM.from_pretrained(model_id, dtype=torch.float32)
+        restore_tied_output_layer(model)
     else:
         from transformers import BitsAndBytesConfig
 
@@ -99,6 +101,8 @@ def load_model(model_id: str, training: dict, smoke: bool):
                 bnb_4bit_use_double_quant=True,
             )
         model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=quantization, dtype=torch.float16, device_map={"": 0})
+        if restore_tied_output_layer(model):
+            print("  çıktı katmanı boş yüklendi; gömme katmanına bağlandı (trgec.modeling)", flush=True)
         if quantization is not None:
             model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=training["gradient_checkpointing"])
 
