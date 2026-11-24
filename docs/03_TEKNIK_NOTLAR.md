@@ -99,3 +99,15 @@ Etkileşimli oturum boştayken de kota harcar. Eğitim "Save Version" ile toplu 
 ### Hatasız cümleler
 
 GECTurk'ün yarısı hatasız cümledir. Alt kümede bu oran korunur. Hatasız örnekler olmadan model her cümlede hata arar ve aşırı düzeltme artar.
+
+### Boş yüklenen çıktı katmanı (Mecellem)
+
+`newmindai/Mecellem-Qwen3-1.7B-TR` ağırlık dosyasında `lm_head.weight` tamamen sıfır; yapılandırma ağırlık bağlama istiyor ama transformers 5.24 iki tabloyu farklı görünce bağlamıyor. Belirti: kayıp ln(sözlük boyutu) = 11,93'te kalır, gradyan normu 0, çıktı hep aynı token. `trgec.modeling.restore_tied_output_layer` bunu yüklemeden sonra onarır. Genel ders: eğitim betiğinin hatasız bitmesi modelin öğrendiğini göstermez; kaybın düştüğüne bak (`trgec.pilot.training_status`).
+
+### fp16'da NaN (Kanarya)
+
+`asafaya/kanarya-2b` (GPT-J) T4'te fp16 ile ilk 20 adım içinde NaN kayıp verdi. T4 bf16 desteklemez. Kayıp NaN olunca eğitim durdurulur (`train.py` içindeki izleyici).
+
+### Grup boyutu ve bellek
+
+T4'te `max_len` 512 ve 4-bit yükleme ile grup boyutu 16 hiçbir adayda sığmadı (pilot, 2026-11-24). 2B'lik adaylar grup 4'te yaklaşık 12 GB kullanıyor. Grup boyutu elle sabitlenmez; `run_pilot.py` taşmada yarıya indirir, etkin grup 16 kalır.

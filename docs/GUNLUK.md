@@ -13,6 +13,30 @@ Kayıt biçimi:
 - Sıradaki adım:
 ```
 
+## 2026-11-24, görev 03 (adım 6–7: sekiz adayın pilotu)
+
+- Yapılan:
+  - Kullanıcı onayıyla sekiz adayın pilotu Kaggle'da koşturuldu (2 saat 55 dakika). Çıktılar indirildi, yerelde ERRANT-TR ile skorlandı (`scripts/summarize_pilot.py`), `raporlar/03_pilot.md` yazıldı.
+  - Mecellem ilk koşuda öğrenmedi (kayıp 11,93'te kaldı). Neden: ağırlık dosyasında `lm_head` tamamen sıfır, transformers 5.24 gömme katmanına bağlamıyor. `trgec.modeling.restore_tied_output_layer` yazıldı; Mecellem tek başına yeniden koşturuldu ve öğrendi.
+  - Mecellem ikinci koşuda cevabı bitirip duramadı. Neden: `<|im_start|>` ve `<|im_end|>` gömme satırları birebir aynı (eğitilmemiş). `model.plain_prompt` ve `trgec.examples.use_plain_prompt` yazıldı: bu adayda düz istem, cevap `<|endoftext|>` ile biter. Yerelde tokenizer ile doğrulandı; Kaggle'da henüz denenmedi.
+  - `summarize_pilot.py` kaybı düşmeyen ya da NaN olan adayı skorlamıyor (`trgec.pilot.training_status`).
+  - `requirements-kaggle.txt`: `bitsandbytes==0.50.2` (pilotta çalışan sürüm). `03_TEKNIK_NOTLAR.md` içine üç tuzak eklendi.
+- Ölçülen (2.000 örnek, 1 tur, T4; ERRANT-TR `cs`, F0.5):
+  - `gecturk_dev_2k`: Mecellem 80,4 (duramayan çıktılarla), Kumru 72,7, Cosmos GPT-2 66,2, EuroLLM 64,6, Qwen3-1.7B 61,2, Qwen3-0.6B 49,4, ufakzeka 19,5.
+  - `oscar_dev`: Kumru 72,9, Mecellem 71,7, Cosmos GPT-2 69,9, EuroLLM 66,5, Qwen3-1.7B 61,5, Qwen3-0.6B 46,9, ufakzeka 39,2.
+  - Grup boyutu 16 hiçbir adayda sığmadı (çalışan: ufakzeka 8, Qwen3-1.7B ve Mecellem 2, diğerleri 4). D2 tahmini en yavaş adayda yaklaşık 1,5 saat.
+  - İç analiz: Kumru değiştirdiği hatalı cümlelerin yalnızca %4'ünde düzeltme listesi yazıyor; Qwen3-1.7B %95,5, Mecellem %79,5.
+  - Kanarya: fp16'da 20. adımda NaN, eğitim durdu. Testler: 100 geçti.
+- Karar ya da değişiklik:
+  - `model.plain_prompt` eklendi (yalnızca Mecellem). Başka karar değişmedi; Kapı B kapatılmadı.
+- Sorun ya da açık soru:
+  - Mecellem'in düz istem düzeltmesi Kaggle'da sınanmadı (son commit GitHub'a gönderilemedi: kimlik doğrulama penceresi bekliyor).
+  - Kumru listeyi daha çok veriyle öğreniyor mu? Pilottan bilinemiyor.
+  - Kanarya: listeden çıkarılsın mı, fp32 ile denensin mi? Karar kullanıcıda.
+  - K21 (c) doğrudan ölçülmedi (eğitimsiz çıkarım yapılmadı).
+  - Kullanıcının elle kontrolü ve M2 scorer hâlâ bekliyor.
+- Sıradaki adım: Kullanıcı onayıyla ikinci aşama pilot (Mecellem düz istemle; Mecellem ve Kumru 3.000 + 3.000 örnekle; seçilecek adayın eğitimsiz hali). Sonra Kapı B.
+
 ## 2026-11-24, görev 03 (adım 6: Kaggle deneme koşusu)
 
 - Yapılan:

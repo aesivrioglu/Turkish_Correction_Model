@@ -68,7 +68,7 @@ Aynı anda B planı ölçütleri (K21) kontrol edilir. Biri geçerliyse eğitime
 ## Bitti sayılma ölçütleri
 
 - [x] Duman testi yerelde geçiyor (2026-11-24)
-- [ ] İki mini eğitim tamamlandı, pilot raporu yazıldı
+- [x] Mini eğitimler tamamlandı, pilot raporu yazıldı (2026-11-24; sekiz adaydan yedisi ölçüldü, Kanarya fp16'da NaN verdi)
 - [ ] Kapı B kararları yapılandırmaya ve `docs/GUNLUK.md` dosyasına işlendi
-- [ ] `requirements-kaggle.txt` çalışan sürümlerle sabitlendi
+- [x] `requirements-kaggle.txt` çalışan sürümlerle sabitlendi (2026-11-24)
 - [ ] `pytest -q` geçiyor
