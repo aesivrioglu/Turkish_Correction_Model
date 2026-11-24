@@ -8,6 +8,10 @@ Girdi:  Kaggle'dan indirilen pilot_outputs.zip'in açıldığı klasör
         (sonuç zaten varsa yeniden hesaplanmaz), sonra sayılar tek tabloda toplanır.
 Çıktı:  outputs/pilot/pilot_table.md ve pilot_table.json
 
+Özet dosyasındaki her kayıt bir tahmin koşusudur. Aynı eğitimin "yalnızca düzelt"
+talimatıyla alınan tahminleri ('<calisma>__correct') ve eğitimsiz modelin tahminleri
+('zeroshot__<model>') ayrı satırlarda görünür; eğitim tablosunda her eğitim bir kez yer alır.
+
 Yalnızca doğrulama setleri skorlanır. Tablo bir öneri değildir; seçimi kullanıcı yapar (Kapı B).
 
 Örnek:
@@ -25,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from trgec.config import load_config
+from trgec.formats import MODE_LABEL
 from trgec.pilot import STATUS_NAN, STATUS_NO_LEARNING, STATUS_OK, training_status
 
 
@@ -68,14 +73,19 @@ def collect(config: dict, config_path: str, pilot_dir: Path) -> list[dict[str, A
             "model", "run", "train_ok", "batch_size", "grad_accum", "steps", "seconds_per_step", "train_seconds",
             "peak_gpu_memory_gb", "loss_first", "loss_last", "parameters_total", "parameters_trainable", "dropped_over_max_len",
         )}
+        # Eski özet dosyalarında bu üç alan yoktur: tek talimat ("düzelt ve etiketle") ve eğitimli model varsayılır.
+        row["mode"] = entry.get("mode", MODE_LABEL)
+        row["zero_shot"] = bool(entry.get("zero_shot"))
+        row["adapter_run"] = None if row["zero_shot"] else entry.get("adapter_run") or run
         row["oom_retries"] = sum(1 for attempt in entry.get("attempts", []) if attempt.get("out_of_memory"))
         # Eğitim yarıda durduysa (NaN) özet dosyasında sayı olmaz; adayın kendi run_meta.json dosyasına bakılır.
-        meta_path = pilot_dir / "adapters" / run / "run_meta.json"
+        meta_path = pilot_dir / "adapters" / (row["adapter_run"] or run) / "run_meta.json"
         run_meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
         row["nan_loss_at_step"] = run_meta.get("nan_loss_at_step")
         if row["batch_size"] is None and entry.get("attempts"):
             row["batch_size"], row["grad_accum"] = entry["attempts"][-1]["batch_size"], entry["attempts"][-1]["grad_accum"]
-        row["status"] = training_status(entry["train_ok"], row["loss_first"], row["loss_last"], row["nan_loss_at_step"])
+        # Eğitimsiz modelde değerlendirilecek bir eğitim yoktur; tahminleri olduğu gibi skorlanır.
+        row["status"] = STATUS_OK if row["zero_shot"] else training_status(entry["train_ok"], row["loss_first"], row["loss_last"], row["nan_loss_at_step"])
         row["sets"] = {}
         for testset in eval_sets:
             # Öğrenmemiş bir adayın tahminleri anlamsızdır; skorlanmaz.
@@ -103,11 +113,20 @@ def collect(config: dict, config_path: str, pilot_dir: Path) -> list[dict[str, A
     return rows
 
 
+def row_label(row: dict[str, Any]) -> str:
+    """Skor tablolarında satırın adı: tahmin koşusu ve ne olduğu."""
+    notes = (["eğitimsiz"] if row.get("zero_shot") else []) + (["yalnızca düzelt"] if row.get("mode", MODE_LABEL) != MODE_LABEL else [])
+    return f"`{row['run']}`" + (f" ({', '.join(notes)})" if notes else "")
+
+
 def render_table(rows: list[dict[str, Any]], eval_sets: list[str]) -> str:
     """Karşılaştırma tablolarını Markdown olarak üretir."""
-    lines = ["## Eğitim (aynı 2.000 örnek, 1 tur, etkin grup 16)", ""]
-    lines += ["| Aday | Parametre (4-bit sayım) | Grup x biriktirme | Adım | sn/adım | Eğitim (sn) | Tepe bellek (GB) | Kayıp ilk → son | Durum |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+    lines = ["## Eğitim (1 tur, etkin grup 16)", ""]
+    lines += ["| Eğitim koşusu | Parametre (4-bit sayım) | Grup x biriktirme | Adım | sn/adım | Eğitim (sn) | Tepe bellek (GB) | Kayıp ilk → son | Durum |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for row in rows:
+        # Her eğitim bir kez yazılır: eğitimsiz koşular ve aynı eğitimin ikinci talimatla alınan tahminleri atlanır.
+        if row.get("zero_shot") or row.get("adapter_run", row["run"]) != row["run"]:
+            continue
         params = f"{row['parameters_total'] / 1e9:.2f}B".replace(".", ",") if row["parameters_total"] else ""
         group = f"{row['batch_size']} x {row['grad_accum']}" if row["batch_size"] else ""
         loss = f"{number(row['loss_first'])} → {number(row['loss_last'])}" if row["loss_first"] is not None else ""
@@ -117,23 +136,23 @@ def render_table(rows: list[dict[str, Any]], eval_sets: list[str]) -> str:
             STATUS_NO_LEARNING: "ÖĞRENMEDİ: kayıp düşmedi",
         }.get(row["status"], "BAŞARISIZ")
         lines.append(
-            f"| `{row['model']}` | {params} | {group} | {row['steps'] or ''} | {number(row['seconds_per_step'], 3)} | "
+            f"| `{row['run']}` | {params} | {group} | {row['steps'] or ''} | {number(row['seconds_per_step'], 3)} | "
             f"{number(row['train_seconds'], 0)} | {number(row['peak_gpu_memory_gb'])} | {loss} | {status} |"
         )
     for testset in eval_sets:
         lines += ["", f"## `{testset}` (ERRANT-TR)", ""]
-        lines += ["| Aday | P | R | F0.5 | %95 güven aralığı | Bozuk çıktı (%) | Hatasız cümlede aşırı düzeltme (%) | Sınıra takılan | Cümle/sn |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+        lines += ["| Tahmin koşusu | P | R | F0.5 | %95 güven aralığı | Bozuk çıktı (%) | Hatasız cümlede aşırı düzeltme (%) | Sınıra takılan | Cümle/sn |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
         ranked = sorted(rows, key=lambda row: -(row["sets"].get(testset) or {}).get("f_beta", -1))
         for row in ranked:
             scores = row["sets"].get(testset)
             if not scores:
-                lines.append(f"| `{row['model']}` | skorlanmadı | | | | | | | |")
+                lines.append(f"| {row_label(row)} | skorlanmadı | | | | | | | |")
                 continue
             has_errors = scores["clean_sentences"] < scores["n"]
             prf = (percent(scores["precision"]), percent(scores["recall"]), percent(scores["f_beta"])) if has_errors else ("", "", "")
             interval = f"{percent(scores['f_beta_low'])}–{percent(scores['f_beta_high'])}" if has_errors else ""
             lines.append(
-                f"| `{row['model']}` | {prf[0]} | {prf[1]} | {prf[2]} | {interval} | {percent(scores['malformed_rate'])} | "
+                f"| {row_label(row)} | {prf[0]} | {prf[1]} | {prf[2]} | {interval} | {percent(scores['malformed_rate'])} | "
                 f"{percent(scores['overcorrection_rate']) if scores['clean_sentences'] else ''} | {scores['hit_length_limit']} | {number(scores['sentences_per_second'])} |"
             )
     return "\n".join(lines) + "\n"

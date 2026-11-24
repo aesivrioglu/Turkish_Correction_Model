@@ -1,0 +1,10 @@
+# İkinci aşama pilot (görev 03): öne çıkan iki aday, her kaynaktan 3.000 örnek. Model --models ile verilir.
+# İlk 3.000 kayıt, birinci aşamadaki ilk 1.000 kaydı içerir (alt küme dosyaları karıştırılmış haldedir).
+inherits: base.yaml
+run_name: pilot2
+mix:
+  gecturk: true
+  oscar: true
+  limit_per_source: 3000
+pilot:
+  eval_sets: [gecturk_dev_2k, oscar_dev, oscar_dev_clean]   # yalnızca doğrulama setleri; test setlerine dokunulmaz

@@ -7,6 +7,8 @@ from typing import Any
 
 import yaml
 
+from .formats import MODE_LABEL
+
 
 def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     merged = dict(base)
@@ -35,3 +37,18 @@ def adapter_run_name(run_name: str, model_id: str, smoke: bool = False) -> str:
     train.py adaptörü bu adla yazar; run_pilot.py ve predict.py aynı adla bulur.
     """
     return f"{'smoke' if smoke else run_name}__{model_id.split('/')[-1]}"
+
+
+def zero_shot_run_name(model_id: str, smoke: bool = False) -> str:
+    """Eğitimsiz (adaptörsüz) bir modelin tahmin klasörünün adı: 'zeroshot__<model>'."""
+    return f"{'smoke_zeroshot' if smoke else 'zeroshot'}__{model_id.split('/')[-1]}"
+
+
+def prediction_run_name(base: str, mode: str) -> str:
+    """Bir tahmin koşusunun klasör adı.
+
+    "Düzelt ve etiketle" talimatı varsayılandır ve ad değişmez. "Yalnızca düzelt"
+    talimatıyla alınan tahminler '<ad>__correct' klasörüne yazılır; böylece aynı
+    modelin iki talimatla alınmış tahminleri birbirinin üstüne yazılmaz.
+    """
+    return base if mode == MODE_LABEL else f"{base}__{mode}"

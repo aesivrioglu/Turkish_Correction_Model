@@ -67,3 +67,15 @@ def test_adapter_run_name():
 
     assert adapter_run_name("pilot", "vngrs/Kumru-2B") == "pilot__Kumru-2B"
     assert adapter_run_name("pilot", "ufakai/ufakzeka-1", smoke=True) == "smoke__ufakzeka-1"
+
+
+def test_prediction_run_names_keep_modes_and_zero_shot_apart():
+    from trgec.config import prediction_run_name, zero_shot_run_name
+    from trgec.formats import MODE_CORRECT, MODE_LABEL
+
+    # Varsayılan talimatta ad değişmez; "yalnızca düzelt" tahminleri ayrı klasöre gider.
+    assert prediction_run_name("pilot2__Kumru-2B", MODE_LABEL) == "pilot2__Kumru-2B"
+    assert prediction_run_name("pilot2__Kumru-2B", MODE_CORRECT) == "pilot2__Kumru-2B__correct"
+    assert zero_shot_run_name("vngrs/Kumru-2B") == "zeroshot__Kumru-2B"
+    assert zero_shot_run_name("ufakai/ufakzeka-1", smoke=True) == "smoke_zeroshot__ufakzeka-1"
+    assert prediction_run_name(zero_shot_run_name("vngrs/Kumru-2B"), MODE_CORRECT) == "zeroshot__Kumru-2B__correct"

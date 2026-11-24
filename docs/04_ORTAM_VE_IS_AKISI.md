@@ -25,7 +25,7 @@ Kod yerelde Claude Code ile yazılır ve test edilir. Kaggle yalnızca GPU gerek
 1. Yerelde kodu yaz ya da değiştir. `pytest -q` geçsin.
 2. Eğitim kodu değiştiyse `python scripts/train.py --config ... --smoke-test` yerelde geçsin.
 3. Commit at, GitHub'a gönder.
-4. Kaggle'da `kaggle/calistirici.ipynb` not defterinde `CONFIG` ve `MODELS` değerlerini ayarla, "Save Version" ile toplu çalıştır.
+4. Kaggle'da `kaggle/calistirici.ipynb` not defterinde `RUNS` listesini ayarla, "Save Version" ile toplu çalıştır.
 5. Betik bitince tahminleri, özetleri ve günlükleri tek bir zip'e koyar (pilotta `pilot_outputs.zip`; not defterinin Output bölümünden indirilir). Ana eğitimlerde adaptör ayrıca Hugging Face Hub'daki özel depoya yüklenir (`train.py --push-to-hub`).
 6. Zip'i yerelde `outputs/kaggle/` altına aç, `python scripts/evaluate.py ...` ile değerlendir.
 7. Sonucu ve gözlemleri `docs/GUNLUK.md` dosyasına yaz.

@@ -8,6 +8,11 @@ ile düzeltilmiş cümleye ve düzeltme listesine ayrılır; biçim bozuksa
 well_formed False olur ve bozuk çıktı oranına girer. Emniyet kemeri (K14)
 yapılandırmada eşik varsa uygulanır; kemersiz çıktı da saklanır.
 
+--mode correct ile model "yalnızca düzelt" talimatını alır: cevapta liste
+beklenmez, ilk satır düzeltilmiş cümle sayılır. Tahminler '<calisma>__correct'
+klasörüne yazılır. --adapter verilmezse temel model eğitimsiz haliyle çalışır
+(klasör: 'zeroshot__<model>'); bu, eğitimin ne kattığını ölçmek içindir (K21).
+
 Çıktı:  outputs/predictions/<calisma>/<set>.jsonl
             {"id", "source", "raw_output", "hypothesis", "hypothesis_no_guard",
              "edits", "well_formed", "guard_triggered", "hit_length_limit",
@@ -29,10 +34,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from trgec.config import load_config
+from trgec.config import load_config, prediction_run_name, zero_shot_run_name
 from trgec.convert import read_jsonl, write_jsonl
 from trgec.examples import inference_messages, render, stop_text, use_plain_prompt
-from trgec.formats import MODE_LABEL, parse_output
+from trgec.formats import MODE_CORRECT, MODE_LABEL, parse_output
 from trgec.guard import apply_guard
 from trgec.modeling import restore_tied_output_layer
 from trgec.seq2seq import clean_output, length_sorted_batches, output_budget
@@ -77,7 +82,8 @@ def predict(records: list[dict], tokenizer, model, device: str, settings: dict[s
     """Kayıtların kaynak cümlelerini düzelttirir; kayıt sırasını koruyarak sonuçları döndürür."""
     import torch
 
-    prompts = [render(tokenizer, inference_messages(record["source"], MODE_LABEL)) for record in records]
+    mode = settings["mode"]
+    prompts = [render(tokenizer, inference_messages(record["source"], mode)) for record in records]
     special = prompts[0].add_special_tokens
     token_counts = [len(ids) for ids in tokenizer([p.prompt for p in prompts], add_special_tokens=special)["input_ids"]]
     source_tokens = [len(ids) for ids in tokenizer([record["source"] for record in records], add_special_tokens=False)["input_ids"]]
@@ -119,7 +125,8 @@ def predict(records: list[dict], tokenizer, model, device: str, settings: dict[s
             source = records[index]["source"]
             produced = [token for token in ids if token != pad_token_id or token in stop_tokens]
             raw = tokenizer.decode(ids, skip_special_tokens=True).strip()
-            parsed = parse_output(raw, expect_edits=True)
+            # "Yalnızca düzelt" talimatında liste beklenmez; ayraç yoksa ilk satır düzeltilmiş cümledir.
+            parsed = parse_output(raw, expect_edits=mode == MODE_LABEL)
             corrected = clean_output(parsed.corrected)
             hypothesis, guard_triggered = corrected, False
             if settings["max_change_ratio"] is not None:
@@ -151,7 +158,8 @@ def main() -> None:
     parser.add_argument("--adapter", help="LoRA adaptörünün klasörü (verilmezse temel model olduğu gibi kullanılır)")
     parser.add_argument("--model", help="temel modelin Hugging Face kimliği (varsayılan: adaptörün kayıtlı temel modeli)")
     parser.add_argument("--config", default="configs/base.yaml")
-    parser.add_argument("--run-name", help="çıktı klasörünün adı (varsayılan: adaptör klasörünün adı)")
+    parser.add_argument("--mode", default=MODE_LABEL, choices=[MODE_LABEL, MODE_CORRECT], help="talimat: label = düzelt ve etiketle (varsayılan, K9), correct = yalnızca düzelt")
+    parser.add_argument("--run-name", help="çıktı klasörünün adı (varsayılan: adaptör klasörünün adı; --mode correct ise sonuna '__correct')")
     parser.add_argument("--max-new-tokens", type=int, help="üretilecek en fazla token (varsayılan: inference.max_new_tokens)")
     parser.add_argument("--batch-size", type=int, help="varsayılan: inference.batch_size")
     parser.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
@@ -167,6 +175,7 @@ def main() -> None:
         raise SystemExit("Model belli değil: --adapter ya da --model ver.")
     device = ("cuda" if torch.cuda.is_available() else "cpu") if args.device == "auto" else args.device
     settings = {
+        "mode": args.mode,
         "max_new_tokens": args.max_new_tokens or config["inference"]["max_new_tokens"],
         "max_new_tokens_per_source_token": config["inference"]["max_new_tokens_per_source_token"],
         "max_new_tokens_margin": config["inference"]["max_new_tokens_margin"],
@@ -182,7 +191,7 @@ def main() -> None:
     records = read_jsonl(path)
     if args.limit:
         records = records[: args.limit]
-    run_name = args.run_name or (adapter_dir.name if adapter_dir else f"zeroshot__{model_id.split('/')[-1]}")
+    run_name = args.run_name or prediction_run_name(adapter_dir.name if adapter_dir else zero_shot_run_name(model_id), args.mode)
     print(f"{name}: {len(records)} cümle | {model_id} | adaptör: {adapter_dir} | {device} | {settings}")
 
     tokenizer, model = load_model(model_id, adapter_dir, device, config["training"]["load_in_4bit"], config["model"].get("plain_prompt"))

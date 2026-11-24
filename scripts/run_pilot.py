@@ -12,6 +12,12 @@ yazılır, sıradaki adaya geçilir.
 Skorlama burada yapılmaz: tahmin dosyaları indirilir ve yerelde
 scripts/evaluate.py ile skorlanır (ERRANT-TR yerelde kurulu).
 
+İkinci aşama pilot için üç seçenek:
+    --modes label correct   tahmin iki talimatla da alınır ("düzelt ve etiketle" ile "yalnızca düzelt")
+    --zero-shot             eğitim yapılmaz; temel modelin eğitimsiz halinden tahmin alınır (K21 c)
+    --append                var olan özet dosyasına eklenir (aynı oturumda birden çok çağrı)
+Özet dosyasında her tahmin koşusu (model x talimat) ayrı bir kayıttır.
+
 Çıktı:  outputs/pilot_summary.json   her adayın durumu, süreleri, tepe belleği
         outputs/logs/<calisma>.log   her adayın tam günlüğü
         outputs/pilot_outputs.zip    tahminler, özetler ve günlükler (adaptör ağırlıkları hariç)
@@ -33,7 +39,8 @@ import time
 import zipfile
 from pathlib import Path
 
-from trgec.config import adapter_run_name, load_config
+from trgec.config import adapter_run_name, load_config, prediction_run_name, zero_shot_run_name
+from trgec.formats import MODE_CORRECT, MODE_LABEL
 from trgec.pilot import halve_batch, is_out_of_memory
 
 SMOKE_PREDICT_LIMIT = 4
@@ -115,6 +122,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", default="configs/pilot.yaml")
     parser.add_argument("--models", nargs="*", help="çalıştırılacak adaylar (varsayılan: model.candidates)")
+    parser.add_argument("--modes", nargs="+", default=[MODE_LABEL], choices=[MODE_LABEL, MODE_CORRECT], help="tahminde kullanılacak talimatlar (varsayılan: label)")
+    parser.add_argument("--zero-shot", action="store_true", help="eğitim yapma; temel modelin eğitimsiz halinden tahmin al")
+    parser.add_argument("--append", action="store_true", help="var olan pilot_summary.json dosyasına ekle (aynı adlı koşu yenisiyle değişir)")
     parser.add_argument("--smoke-test", action="store_true", help="yerel deneme: eğitim duman testi, her setten 4 cümle")
     parser.add_argument("--clean-cache", action="store_true", help="her adaydan sonra indirilen ağırlıkları sil (Kaggle'da disk için)")
     args = parser.parse_args()
@@ -134,49 +144,63 @@ def main() -> None:
     env.setdefault("CUDA_VISIBLE_DEVICES", "0")
     env.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")  # bellek parçalanmasını azaltır
 
-    summary: list[dict] = []
+    summary: list[dict] = json.loads(summary_path.read_text(encoding="utf-8")) if args.append and summary_path.exists() else []
+    new_entries: list[dict] = []
     for number, model_id in enumerate(models, start=1):
-        run_name = adapter_run_name(config["run_name"], model_id, args.smoke_test)
-        log_path = outputs / "logs" / f"{run_name}.log"
-        adapter_dir = outputs / "adapters" / run_name
-        entry: dict = {"model": model_id, "run": run_name, "train_ok": False, "predict": {}}
-        print(f"\n===== [{number}/{len(models)}] {model_id} =====", flush=True)
+        print(f"\n===== [{number}/{len(models)}] {model_id}{' (eğitimsiz)' if args.zero_shot else ''} =====", flush=True)
+        # Bu adayın bütün tahmin koşularında ortak olan alanlar (eğitim ölçümleri).
+        shared: dict = {"model": model_id, "zero_shot": args.zero_shot, "adapter_run": None, "train_ok": False}
 
-        train = [sys.executable, "scripts/train.py", "--config", args.config, "--model", model_id]
-        if args.smoke_test:
-            train.append("--smoke-test")
-        entry.update(train_with_fallback(train, config["training"]["batch_size"], config["training"]["grad_accum"], log_path, env))
+        if args.zero_shot:
+            base_run = zero_shot_run_name(model_id, args.smoke_test)
+            log_path = outputs / "logs" / f"{base_run}.log"
+            model_args = ["--model", model_id]
+            can_predict = True
+        else:
+            base_run = adapter_run_name(config["run_name"], model_id, args.smoke_test)
+            log_path = outputs / "logs" / f"{base_run}.log"
+            adapter_dir = outputs / "adapters" / base_run
+            model_args = ["--adapter", str(adapter_dir)]
+            shared["adapter_run"] = base_run
+            train = [sys.executable, "scripts/train.py", "--config", args.config, "--model", model_id]
+            if args.smoke_test:
+                train.append("--smoke-test")
+            shared.update(train_with_fallback(train, config["training"]["batch_size"], config["training"]["grad_accum"], log_path, env))
+            can_predict = shared["train_ok"]
+            if can_predict:
+                meta = json.loads((adapter_dir / "run_meta.json").read_text(encoding="utf-8"))
+                for key in ("steps", "seconds_per_step", "peak_gpu_memory_gb", "loss_first", "loss_last", "parameters_total", "parameters_trainable"):
+                    shared[key] = meta.get(key)
+                shared["dropped_over_max_len"] = meta["data"]["dropped_over_max_len"]
+            else:
+                print(f"  EĞİTİM BAŞARISIZ: {model_id}. Günlük: {log_path}", flush=True)
 
-        if entry["train_ok"]:
-            meta = json.loads((adapter_dir / "run_meta.json").read_text(encoding="utf-8"))
-            for key in ("steps", "seconds_per_step", "peak_gpu_memory_gb", "loss_first", "loss_last", "parameters_total", "parameters_trainable"):
-                entry[key] = meta.get(key)
-            entry["dropped_over_max_len"] = meta["data"]["dropped_over_max_len"]
-            for name in eval_sets:
-                command = [sys.executable, "scripts/predict.py", "--config", args.config, "--testset", name, "--adapter", str(adapter_dir)]
+        # Eğitim başarısızsa tek kayıt yazılır; değilse her talimat için ayrı tahmin koşusu.
+        for mode in args.modes if can_predict else args.modes[:1]:
+            entry = {**shared, "run": prediction_run_name(base_run, mode), "mode": mode, "predict": {}}
+            for name in eval_sets if can_predict else []:
+                command = [sys.executable, "scripts/predict.py", "--config", args.config, "--testset", name, "--mode", mode, "--run-name", entry["run"], *model_args]
                 if args.smoke_test:
                     command += ["--limit", str(SMOKE_PREDICT_LIMIT)]
                 ok, seconds, _tail = run_step(command, log_path, env)
                 entry["predict"][name] = {"ok": ok, "seconds": seconds}
-        else:
-            print(f"  EĞİTİM BAŞARISIZ: {model_id}. Günlük: {log_path}", flush=True)
-
-        summary.append(entry)
-        summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+            new_entries.append(entry)
+            summary = [old for old in summary if old["run"] != entry["run"]] + [entry]
+            summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
         if args.clean_cache:
             clean_model_cache(model_id)
 
     archive = pack_outputs(outputs)
     print("\n===== özet =====")
-    for entry in summary:
+    for entry in new_entries:
         predicted = sum(1 for result in entry["predict"].values() if result["ok"])
+        training = "eğitimsiz" if entry["zero_shot"] else f"eğitim {'tamam' if entry['train_ok'] else 'BAŞARISIZ'} ({entry['train_seconds']} sn)"
         print(
-            f"{entry['model']}: eğitim {'tamam' if entry['train_ok'] else 'BAŞARISIZ'} ({entry['train_seconds']} sn) | "
-            f"tahmin {predicted}/{len(eval_sets)} set | grup {entry.get('batch_size')} x {entry.get('grad_accum')} | "
+            f"{entry['run']}: {training} | tahmin {predicted}/{len(eval_sets)} set | grup {entry.get('batch_size')} x {entry.get('grad_accum')} | "
             f"sn/adım {entry.get('seconds_per_step')} | tepe bellek {entry.get('peak_gpu_memory_gb')} GB"
         )
     print(f"\nindirilecek dosya: {archive}")
-    if not all(entry["train_ok"] for entry in summary):
+    if not all(entry["zero_shot"] or entry["train_ok"] for entry in new_entries):
         raise SystemExit(1)
 
 
